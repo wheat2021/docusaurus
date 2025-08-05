@@ -1,0 +1,148 @@
+---
+id: introduction
+title: 介绍
+slug: /
+sidebar_label: 介绍
+sidebar_position: 1
+---
+
+import Tweet from '@site/src/components/Tweet';
+import TweetQuote from '@site/src/components/TweetQuote';
+
+Docusaurus 是一个静态站点生成器，可以帮助您轻松地发布美观、易于访问、以文档为中心的网站。
+
+<div className="container">
+  <div className="row">
+    <div className="col col--12">
+      <ul>
+        <li>
+          <strong>由 <a href="https://mdxjs.com/">MDX</a> 强力驱动</strong>：在您的 Markdown 文件中使用 JSX 编写交互式组件。
+        </li>
+        <li>
+          <strong>使用 <a href="https://reactjs.org/">React</a> 构建</strong>：通过编写 React 组件来扩展和自定义您的项目布局。
+        </li>
+        <li>
+          <strong>为翻译做好准备</strong>：使用 Git、CI 和 Crowdin 免费翻译您的文档。
+        </li>
+        <li>
+          <strong>文档版本控制</strong>：帮助您保持文档与项目发布同步。
+        </li>
+        <li>
+          <strong>内容搜索</strong>：您的社区将轻松找到他们正在寻找的内容。
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+Docusaurus 的构建重点是易于设置和使用，以便您可以专注于编写文档。
+
+> 我们正在使用 Docusaurus 构建这个网站。
+
+<Tweet
+  url="httpshttps://twitter.com/docusaurus/status/1554238523852349441"
+  handle="docusaurus"
+  name="Docusaurus"
+  date="2022年8月1日"
+  content={
+    <>
+      经过 4 年的努力，我们终于高兴地宣布 Docusaurus 2.0 发布了！🥳
+      <br />
+      <br />
+      阅读官方公告：
+      <br />
+      <a href="https://docusaurus.io/blog/2022/08/01/announcing-docusaurus-2.0">
+        docusaurus.io/blog/2022/08/0
+      </a>
+    </>
+  }
+/>
+
+## 快速入门
+
+通过运行以下命令，在 **5 分钟** 内开始：
+
+```shell
+npx create-docusaurus@latest my-website classic
+```
+
+您也可以通过 [docusaurus.new](https://docusaurus.new) 按需试用 Docusaurus。
+
+<TweetQuote
+  url="https://twitter.com/jdalton/status/1245801332333846528"
+  handle="jdalton"
+  name="John-David Dalton"
+  text="Docusaurus 2 是文档网站的一大飞跃。我用过 v1，并且非常喜欢 v2 的升级。它灵活、可定制，而且主题很漂亮。我印象深刻，以至于我正在为我们新的 Lodash 文档使用它！（感谢 @docusaurus 团队！）"
+/>
+
+## 我们的赞助商
+
+Docusaurus 自豪地由以下公司赞助：
+
+<div className="container" style={{marginTop: '2rem'}}>
+  <div className="row">
+    <div className="col col--2">
+      <a href="https://www.infima.dev/">
+        <img
+          src="https://www.infima.dev/img/logo.svg"
+          alt="Infima"
+          width="100"
+        />
+      </a>
+    </div>
+    <div className="col col--2">
+      <a href="https://www.algolia.com/">
+        <img
+          src="/img/algolia.svg"
+          alt="Algolia"
+          width="100"
+        />
+      </a>
+    </div>
+    <div className="col col--2">
+      <a href="https://www.netlify.com/">
+        <svg
+          width="114"
+          height="32"
+          viewBox="0 0 114 32"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M9.16667 31.0833H0.5V0.916626H9.16667V31.0833Z"
+            fill="#000"
+          />
+          <path
+            d="M22.6875 31.0833H14.0208V0.916626H22.6875V31.0833Z"
+            fill="#000"
+          />
+          <path
+            d="M22.6875 12.3333H31.3542V0.916626H14.0208V31.0833H31.3542V19.75H22.6875V12.3333Z"
+            fill="#000"
+          />
+          <path
+            d="M44.875 31.0833H36.2083V0.916626H44.875V31.0833Z"
+            fill="#000"
+          />
+          <path
+            d="M44.875 12.3333H53.5417V0.916626H36.2083V31.0833H53.5417V19.75H44.875V12.3333Z"
+            fill="#000"
+          />
+          <path
+            d="M67.0625 31.0833H58.3958V0.916626H75.7292V12.3333H67.0625V19.75H75.7292V31.0833H67.0625Z"
+            fill="#000"
+          />
+          <path
+            d="M88.4375 31.0833H79.7708V0.916626H97.1042V12.3333H88.4375V31.0833Z"
+            fill="#000"
+          />
+          <path
+            d="M113.062 22.5L110.625 20.3333C111.729 19.0208 112.5 17.5208 112.5 15.5C112.5 11.5833 109.583 8.58329 105.5 8.58329C101.417 8.58329 98.5 11.5833 98.5 15.5C98.5 19.4166 101.417 22.4166 105.5 22.4166C107.146 22.4166 108.562 21.9166 109.729 21.0833L112.229 23.4166L105.438 31.0833H97.1042L106.562 19.5833C106.104 19.5208 105.812 19.5 105.5 19.5C103.354 19.5 101.646 17.75 101.646 15.5C101.646 13.25 103.354 11.5 105.5 11.5C107.646 11.5 109.354 13.25 109.354 15.5C109.354 17.1458 108.562 18.5 107.354 19.25L109.229 17.0833L113.062 22.5Z"
+            fill="#40C4B2"
+          />
+        </svg>
+      </a>
+    </div>
+  </div>
+</div>
+
+Docusaurus 是一个绝佳的项目。
