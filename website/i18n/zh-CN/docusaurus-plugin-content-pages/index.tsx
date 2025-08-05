@@ -22,7 +22,7 @@ import Quotes from '@site/src/data/quotes';
 import Features, {type FeatureItem} from '@site/src/data/features';
 import Heading from '@theme/Heading';
 
-import styles from './styles.module.css';
+import styles from '@site/src/pages/styles.module.css';
 import 'react-lite-youtube-embed/dist/LiteYouTubeEmbed.css';
 
 function HeroBanner() {
@@ -61,7 +61,7 @@ function HeroBanner() {
           <span className={styles.indexCtasGitHubButtonWrapper}>
             <iframe
               className={styles.indexCtasGitHubButton}
-              src="https://ghbtns.com/github-btn.html?user=facebook&amp;repo=docusaurus&amp;type=star&amp;count=true&amp;size=large"
+              src="https://ghbtns.com/github-btn.html?user=facebook&repo=docusaurus&type=star&count=true&size=large"
               width={160}
               height={30}
               title="GitHub Stars"
