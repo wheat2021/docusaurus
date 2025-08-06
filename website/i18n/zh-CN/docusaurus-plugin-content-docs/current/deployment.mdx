@@ -1,0 +1,940 @@
+---
+title: 部署
+description: 在一系列静态站点托管服务上为生产环境部署你的 Docusaurus 应用。
+---
+
+# 部署
+
+要为生产环境构建你网站的静态文件，请运行：
+
+```bash npm2yarn
+npm run build
+```
+
+完成后，静态文件将在 `build` 目录中生成。
+
+:::note
+
+Docusaurus 的唯一职责是构建你的站点并在 `build` 目录中输出静态文件。
+
+现在由你来选择如何托管这些静态文件。
+
+:::
+
+你可以将你的站点部署到静态站点托管服务，例如 [Vercel](https://vercel.com/)、[GitHub Pages](https://pages.github.com/)、[Netlify](https://www.netlify.com/)、[Render](https://render.com/docs/static-sites) 和 [Surge](https://surge.sh/help/getting-started-with-surge)。
+
+Docusaurus 站点是静态渲染的，通常在没有 JavaScript 的情况下也能工作！
+
+## 配置 {#configuration}
+
+为了优化路由并从正确的位置提供文件，`docusaurus.config.js` 中需要以下参数：
+
+| 名称 | 描述 |
+| --- | --- |
+| `url` | 你的站点的 URL。对于部署在 `https://my-org.com/my-project/` 的站点，`url` 是 `https://my-org.com/`。 |
+| `baseUrl` | 你的项目的基本 URL，以斜杠结尾。对于部署在 `https://my-org.com/my-project/` 的站点，`baseUrl` 是 `/my-project/`。 |
+
+## 在本地测试你的构建 {#testing-build-locally}
+
+在部署到生产环境之前，在本地测试你的构建非常重要。Docusaurus 为此提供了一个 [`docusaurus serve`](cli.mdx#docusaurus-serve-sitedir) 命令：
+
+```bash npm2yarn
+npm run serve
+```
+
+默认情况下，这将在 [`http://localhost:3000/`](http://localhost:3000/) 加载你的站点。
+
+## URL 末尾斜杠配置 {#trailing-slashes}
+
+Docusaurus 有一个 [`trailingSlash` 配置](./api/docusaurus.config.js.mdx#trailingSlash)，允许自定义 URL/链接和生成的文件名模式。
+
+默认值通常工作得很好。不幸的是，每个静态托管提供商的**行为都不同**，将完全相同的站点部署到不同的主机会导致不同的结果。根据你的主机，更改此配置可能会很有用。
+
+:::tip
+
+使用 [slorber/trailing-slash-guide](https://github.com/slorber/trailing-slash-guide) 来更好地了解你的主机的行为并适当地配置 `trailingSlash`。
+
+:::
+
+## 使用环境变量 {#using-environment-variables}
+
+将潜在的敏感信息放在环境中是常见的做法。然而，在一个典型的 Docusaurus 网站中，`docusaurus.config.js` 文件是与 Node.js 环境的唯一接口（请参阅我们的[架构概述](advanced/architecture.mdx)），而其他所有内容（MDX 页面、React 组件等）都是客户端的，无法直接访问 `process` 全局变量。在这种情况下，你可以考虑使用 [`customFields`](api/docusaurus.config.js.mdx#customFields) 将环境变量传递给客户端。
+
+```js title="docusaurus.config.js"
+// 如果你正在使用 dotenv (https://www.npmjs.com/package/dotenv)
+import 'dotenv/config';
+
+export default {
+  title: '...',
+  url: process.env.URL, // 你也可以使用环境变量来控制站点的具体信息
+  // highlight-start
+  customFields: {
+    // 在这里放置你的自定义环境
+    teamEmail: process.env.EMAIL,
+  },
+  // highlight-end
+};
+```
+
+```jsx title="home.jsx"
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+
+export default function Home() {
+  const {
+    siteConfig: {customFields},
+  } = useDocusaurusContext();
+  return <div>通过 {customFields.teamEmail} 联系我们！</div>;
+}
+```
+
+## 选择托管服务提供商 {#choosing-a-hosting-provider}
+
+有几种常见的托管选项：
+
+- 使用像 Apache2 或 Nginx 这样的 HTTP 服务器进行[自主托管](#self-hosting)。
+- Jamstack 提供商（例如 [Netlify](#deploying-to-netlify) 和 [Vercel](#deploying-to-vercel)）。我们将以它们为参考，但同样的道理也适用于其他提供商。
+- [GitHub Pages](#deploying-to-github-pages)（从定义上讲，它也是 Jamstack，但我们将其分开比较）。
+
+如果你不确定选择哪一个，请问自己以下问题：
+
+<details>
+
+<summary>
+  我愿意为此投入多少资源（金钱、人力等）？
+</summary>
+
+- 🔴 自主托管需要网络以及 Linux 和 Web 服务器管理的经验。这是最困难的选项，需要最多的时间来成功管理。在费用方面，云服务几乎从不免费，购买/部署现场服务器可能成本更高。
+- 🟢 Jamstack 提供商可以帮助你几乎立即建立一个可工作的网站，并提供易于配置的服务器端重定向等功能。许多提供商即使是免费计划也提供慷慨的构建时间配额，你几乎永远不会超出。然而，免费计划有限制，一旦达到这些限制，你就需要付费。详情请查看你的提供商的定价页面。
+- 🟡 GitHub Pages 的部署工作流程设置起来可能很繁琐。（证据：参见[部署到 GitHub Pages](#deploying-to-github-pages)的篇幅！）然而，这项服务（包括构建和部署）对于公共仓库始终是免费的，我们有详细的说明来帮助你使其工作。
+
+</details>
+
+<details>
+
+<summary>我需要多少服务器端自定义？</summary>
+
+- 🟢 通过自主托管，你可以访问整个服务器的配置。你可以配置虚拟主机以根据请求 URL 提供不同的内容，可以进行复杂的服务器端重定向，可以实现身份验证等等。如果你需要很多服务器端功能，请自主托管你的网站。
+- 🟡 Jamstack 通常提供一些服务器端配置（例如 URL 格式化（末尾斜杠）、服务器端重定向等）。
+- 🔴 除了强制执行 HTTPS 和设置 CNAME 记录外，GitHub Pages 不暴露服务器端配置。
+
+</details>
+
+<details>
+
+<summary>我需要协作友好的部署工作流程吗？</summary>
+
+- 🟡 自主托管的服务可以利用像 Netlify 这样的持续部署功能，但需要更多的工作。通常，你会指定一个特定的人来管理部署，工作流程不会像其他两个选项那样基于 git。
+- 🟢 Netlify 和 Vercel 为每个拉取请求提供部署预览，这对于团队在合并到生产环境之前审查工作很有用。你还可以管理一个具有不同成员访问部署权限的团队。
+- 🟡 GitHub Pages 无法以不复杂的方式进行部署预览。一个仓库只能与一个站点部署相关联。另一方面，你可以控制谁对站点的部署有写访问权限。
+
+</details>
+
+没有一劳永逸的解决方案。在做出选择之前，你需要权衡你的需求和资源。
+
+## 自主托管 {#self-hosting}
+
+Docusaurus 可以使用 [`docusaurus serve`](cli.mdx#docusaurus-serve-sitedir) 进行自主托管。使用 `--port` 更改端口，使用 `--host` 更改主机。
+
+```bash npm2yarn
+npm run serve -- --build --port 80 --host 0.0.0.0
+```
+
+:::warning
+
+与静态托管提供商/CDN 相比，这不是最佳选择。
+
+:::
+
+:::warning
+
+在以下部分中，我们将介绍一些常见的托管提供商以及如何配置它们以最有效地部署 Docusaurus 站点。Docusaurus 不隶属于任何这些服务，此信息仅为方便起见而提供。一些文章由第三方提供，最近的 API 更改可能未在我们这边反映。如果你看到过时的内容，欢迎提交 PR。
+
+因为我们只能尽力提供此内容，所以我们已停止接受添加新托管选项的 PR。但是，你可以在单独的站点（例如你的博客或提供商的官方网站）上发布你的文章，并要求我们包含指向你文章的链接。
+
+:::
+
+## 部署到 Netlify {#deploying-to-netlify}
+
+要将你的 Docusaurus 站点部署到 [Netlify](https://www.netlify.com/)，首先请确保正确配置了以下选项：
+
+```js title="docusaurus.config.js"
+export default {
+  // highlight-start
+  url: 'https://docusaurus-2.netlify.app', // 你的站点的 URL，末尾无斜杠
+  baseUrl: '/', // 你的站点相对于你的仓库的根目录
+  // highlight-end
+  // ...
+};
+```
+
+然后，[使用 Netlify 创建你的站点](https://app.netlify.com/start)。
+
+在设置站点时，按如下方式指定构建命令和目录：
+
+- 构建命令：`npm run build`
+- 发布目录：`build`
+
+如果你没有配置这些构建选项，你仍然可以在站点创建后转到“Site settings” -> “Build & deploy”。
+
+一旦使用上述选项正确配置，你的站点应该会部署并在合并到你的部署分支（默认为 `main`）时自动重新部署。
+
+:::warning
+
+一些 Docusaurus 站点将 `docs` 文件夹放在 `website` 之外（很可能是以前的 Docusaurus v1 站点）：
+
+```bash
+repo           # git 根目录
+├── docs       # MD 文件
+└── website    # Docusaurus 根目录
+```
+
+如果你决定使用 `website` 文件夹作为 Netlify 的基本目录，当你更新 `docs` 文件夹时，Netlify 将不会触发构建，你需要配置一个[自定义的 `ignore` 命令](https://docs.netlify.com/configure-builds/common-configurations/ignore-builds/)：
+
+```toml title="website/netlify.toml"
+[build]
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF . ../docs/"
+```
+
+:::
+
+:::warning
+
+默认情况下，Netlify 会在 Docusaurus URL 的末尾添加斜杠。
+
+建议禁用 Netlify 设置 `Post Processing > Asset Optimization > Pretty Urls`，以防止小写 URL、不必要的重定向和 404 错误。
+
+**请特别注意**：`Disable asset optimization` 全局复选框已损坏，实际上并不能禁用 `Pretty URLs` 设置。请确保**独立取消选中它**。
+
+如果你想保持 Netlify 的 `Pretty Urls` 设置开启，请适当地调整 `trailingSlash` Docusaurus 配置。
+
+更多信息请参阅 [slorber/trailing-slash-guide](https://github.com/slorber/trailing-slash-guide)。
+
+:::
+
+## 部署到 Vercel {#deploying-to-vercel}
+
+将你的 Docusaurus 项目部署到 [Vercel](https://vercel.com/) 将在性能和易用性方面为你提供[各种好处](https://vercel.com/)。
+
+要使用 [Vercel for Git 集成](https://vercel.com/docs/concepts/git)部署你的 Docusaurus 项目，请确保它已推送到 Git 仓库。
+
+使用[导入流程](https://vercel.com/import/git)将项目导入到 Vercel。在导入过程中，你会发现所有相关选项都已为你预先配置好；但是，你可以选择更改这些[选项](https://vercel.com/docs/build-step#build-&-development-settings)中的任何一个。
+
+项目导入后，所有后续对分支的推送都将生成[预览部署](https://vercel.com/docs/platform/deployments#preview)，对[生产分支](https://vercel.com/docs/git-integrations#production-branch)（通常是 "main" 或 "master"）的所有更改都将导致[生产部署](https://vercel.com/docs/platform/deployments#production)。
+
+## 部署到 GitHub Pages {#deploying-to-github-pages}
+
+Docusaurus 提供了一种简便的方式来发布到 [GitHub Pages](https://pages.github.com/)，每个 GitHub 仓库都免费提供。
+
+### 概述 {#github-pages-overview}
+
+通常，发布过程涉及两个仓库（至少两个分支）：包含源文件的分支和包含要由 GitHub Pages 提供的构建输出的分支。在以下教程中，它们将分别被称为**“源”**和**“部署”**。
+
+每个 GitHub 仓库都与一个 GitHub Pages 服务相关联。如果部署仓库名为 `my-org/my-project`（其中 `my-org` 是组织或用户名），则部署的站点将出现在 `https://my-org.github.io/my-project/`。如果部署仓库名为 `my-org/my-org.github.io`（_组织 GitHub Pages 仓库_），则站点将出现在 `https://my-org.github.io/`。
+
+:::info
+
+如果你想为 GitHub Pages 使用自定义域名，请在 `static` 目录中创建一个 `CNAME` 文件。`static` 目录中的任何内容都将被复制到 `build` 目录的根目录以进行部署。使用自定义域名时，你应该能够从 `baseUrl: '/projectName/'` 改回 `baseUrl: '/'`，并将 `url` 设置为你的自定义域名。
+
+更多详情请参阅 GitHub Pages 的文档 [User, Organization, and Project Pages](https://help.github.com/en/articles/user-organization-and-project-pages)。
+
+:::
+
+GitHub Pages 从默认分支（通常是 `master` / `main`）或 `gh-pages` 分支，以及从根目录或 `/docs` 文件夹中获取可部署的文件（`docusaurus build` 的输出）。你可以在你的仓库中的 `Settings > Pages` 中进行配置。此分支将被称为“部署分支”。
+
+我们提供了一个 `docusaurus deploy` 命令，可以帮助你用一个命令将你的站点从源分支部署到部署分支：克隆、构建和提交。
+
+### `docusaurus.config.js` 设置 {#docusaurusconfigjs-settings}
+
+首先，修改你的 `docusaurus.config.js` 并添加以下参数：
+
+| 名称 | 描述 |
+| --- | --- |
+| `organizationName` | 拥有部署仓库的 GitHub 用户或组织。 |
+| `projectName` | 部署仓库的名称。 |
+| `deploymentBranch` | 部署分支的名称。对于非组织 GitHub Pages 仓库（`projectName` 不以 `.github.io` 结尾），它默认为 `'gh-pages'`。否则，需要作为配置字段或环境变量明确指定。 |
+
+这些字段也有其对应的环境变量，优先级更高：`ORGANIZATION_NAME`、`PROJECT_NAME` 和 `DEPLOYMENT_BRANCH`。
+
+:::warning
+
+默认情况下，GitHub Pages 会在 Docusaurus URL 的末尾添加斜杠。建议设置一个 `trailingSlash` 配置（`true` 或 `false`，而不是 `undefined`）。
+
+:::
+
+示例：
+
+```js title="docusaurus.config.js"
+export default {
+  // ...
+  url: 'https://endiliey.github.io', // 你的网站 URL
+  baseUrl: '/',
+  // highlight-start
+  projectName: 'endiliey.github.io',
+  organizationName: 'endiliey',
+  trailingSlash: false,
+  // highlight-end
+  // ...
+};
+```
+
+:::warning
+
+默认情况下，GitHub Pages 会通过 [Jekyll](https://jekyllrb.com/) 运行发布的文件。由于 Jekyll 会丢弃任何以 `_` 开头的文件，建议你通过在 `static` 目录中添加一个名为 `.nojekyll` 的空文件来禁用 Jekyll。
+
+:::
+
+### 环境设置 {#environment-settings}
+
+| 名称 | 描述 |
+| --- | --- |
+| `USE_SSH` | 设置为 `true` 以使用 SSH 而不是默认的 HTTPS 连接到 GitHub 仓库。如果源仓库 URL 是一个 SSH URL（例如 `git@github.com:facebook/docusaurus.git`），则 `USE_SSH` 被推断为 `true`。 |
+| `GIT_USER` | **对部署仓库有推送权限**的 GitHub 帐户的用户名。对于你自己的仓库，这通常是你的 GitHub 用户名。如果不使用 SSH，则为必需，否则将被忽略。 |
+| `GIT_PASS` | git 用户的个人访问令牌（由 `GIT_USER` 指定），以方便非交互式部署（例如持续部署）|
+| `CURRENT_BRANCH` | 源分支。通常，分支将是 `main` 或 `master`，但可以是除 `gh-pages` 之外的任何分支。如果未为此变量设置任何内容，则将使用调用 `docusaurus deploy` 的当前分支。 |
+| `GIT_USER_NAME` | 推送到部署仓库时使用的 `git config user.name` 值 |
+| `GIT_USER_EMAIL` | 推送到部署仓库时使用的 `git config user.email` 值 |
+
+GitHub Enterprise 安装应与 github.com 以相同的方式工作；你只需要将组织的 GitHub Enterprise 主机设置为环境变量：
+
+| 名称          | 描述                                     |
+| ------------- | ----------------------------------------------- |
+| `GITHUB_HOST` | 你的 GitHub Enterprise 站点的域名。 |
+| `GITHUB_PORT` | 你的 GitHub Enterprise 站点的端口。        |
+
+### 部署 {#deploy}
+
+最后，要将你的站点部署到 GitHub Pages，请运行：
+
+```mdx-code-block
+<Tabs>
+<TabItem value="bash" label="Bash">
+```
+
+```bash
+GIT_USER=<GITHUB_USERNAME> yarn deploy
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="windows" label="Windows">
+```
+
+```batch
+cmd /C "set "GIT_USER=<GITHUB_USERNAME>" && yarn deploy"
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="powershell" label="PowerShell">
+```
+
+```powershell
+cmd /C 'set "GIT_USER=<GITHUB_USERNAME>" && yarn deploy'
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
+```
+
+:::warning
+
+从 2021 年 8 月开始，GitHub 要求每次命令行登录都使用**个人访问令牌**而不是密码。当 GitHub 提示输入密码时，请输入 PAT。更多信息请参阅 [GitHub 文档](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)。
+
+或者，你可以使用 SSH (`USE_SSH=true`) 登录。
+
+:::
+
+### 使用 GitHub Actions 触发部署 {#triggering-deployment-with-github-actions}
+
+[GitHub Actions](https://help.github.com/en/actions) 允许你在你的仓库中自动化、自定义和执行你的软件开发工作流程。
+
+下面的工作流示例假设你的网站源位于你的仓库的 `main` 分支（_源分支_是 `main`），并且你的[发布源](https://help.github.com/en/github/working-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)被配置为[使用自定义 GitHub Actions 工作流发布](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-with-a-custom-github-actions-workflow)。
+
+我们的目标是：
+
+1. 当向 `main` 发出新的拉取请求时，有一个操作可以确保站点成功构建，而无需实际部署。此作业将被称为 `test-deploy`。
+2. 当拉取请求合并到 `main` 分支或有人直接推送到 `main` 分支时，它将被构建并部署到 GitHub Pages。此作业将被称为 `deploy`。
+
+以下是使用 GitHub Actions 部署你的文档的两种方法。根据你的部署仓库的位置，选择下面的相关选项卡：
+
+- 源仓库和部署仓库是**同一个**仓库。
+- 部署仓库是与源不同的**远程**仓库。此场景的说明假设[发布源](https://help.github.com/en/github/working-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)是 `gh-pages` 分支。
+
+```mdx-code-block
+<Tabs>
+<TabItem value="same" label="相同仓库">
+```
+
+虽然你可以在同一个工作流文件中定义两个作业，但原始的 `deploy` 工作流在 PR 检查套件状态中将始终被列为跳过，这不能指示实际状态，也无法为审查过程提供价值。因此，我们建议将它们作为单独的工作流进行管理。
+
+<details>
+<summary>GitHub Action 文件</summary>
+
+添加这两个工作流文件：
+
+:::warning 为你的设置调整参数
+
+如果你的 Docusaurus 项目不在你的仓库的根目录，你可能需要配置一个[默认工作目录](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-set-the-default-shell-and-working-directory)，并相应地调整路径。
+
+:::
+
+<Tabs>
+  <TabItem value="npm" label="npm">
+
+```yml title=".github/workflows/deploy.yml"
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    # 如果你想进一步定义触发器、路径等，请查阅 gh actions 文档
+    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
+
+jobs:
+  build:
+    name: Build Docusaurus
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+      - name: Build website
+        run: npm run build
+
+      - name: Upload Build Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+
+    # 授予 GITHUB_TOKEN 所需的权限以进行 Pages 部署
+    permissions:
+      pages: write # 部署到 Pages
+      id-token: write # 验证部署是否来自适当的源
+
+    # 部署到 github-pages 环境
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+```
+
+```yml title=".github/workflows/test-deploy.yml"
+name: Test deployment
+
+on:
+  pull_request:
+    branches:
+      - main
+    # 如果你想进一步定义触发器、路径等，请查阅 gh actions 文档
+    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
+
+jobs:
+  test-deploy:
+    name: Test deployment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+      - name: Test build website
+        run: npm run build
+```
+
+  </TabItem>
+  <TabItem value="yarn" label="Yarn">
+
+```yml title=".github/workflows/deploy.yml"
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    # 如果你想进一步定义触发器、路径等，请查阅 gh actions 文档
+    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
+
+jobs:
+  build:
+    name: Build Docusaurus
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Build website
+        run: yarn build
+
+      - name: Upload Build Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+
+    # 授予 GITHUB_TOKEN 所需的权限以进行 Pages 部署
+    permissions:
+      pages: write # 部署到 Pages
+      id-token: write # 验证部署是否来自适当的源
+
+    # 部署到 github-pages 环境
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+```
+
+```yml title=".github/workflows/test-deploy.yml"
+name: Test deployment
+
+on:
+  pull_request:
+    branches:
+      - main
+    # 如果你想进一步定义触发器、路径等，请查阅 gh actions 文档
+    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
+
+jobs:
+  test-deploy:
+    name: Test deployment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Test build website
+        run: yarn build
+```
+
+  </TabItem>
+</Tabs>
+
+</details>
+
+```mdx-code-block
+</TabItem>
+<TabItem value="remote" label="远程仓库">
+```
+
+跨仓库发布设置起来更困难，因为你需要推送到另一个有权限检查的仓库。我们将使用 SSH 进行身份验证。
+
+1. 生成一个新的 [SSH 密钥](https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)。由于此 SSH 密钥将在 CI 中使用，请确保不要输入任何密码短语。
+2. 默认情况下，你的公钥应该已在 `~/.ssh/id_rsa.pub` 中创建；否则，请使用你在上一步中提供的名称将你的密钥添加到 [GitHub 部署密钥](https://developer.github.com/v3/guides/managing-deploy-keys/)。
+3. 使用 `pbcopy < ~/.ssh/id_rsa.pub` 将密钥复制到剪贴板，并将其作为[部署密钥](https://developer.github.com/v3/guides/managing-deploy-keys/#deploy-keys)粘贴到部署仓库中。如果命令行对你不起作用，请复制文件内容。在保存你的部署密钥之前，请选中 `Allow write access` 复选框。
+4. 你需要你的私钥作为 [GitHub secret](https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets) 以允许 Docusaurus 为你运行部署。
+5. 使用 `pbcopy < ~/.ssh/id_rsa` 复制你的私钥，并在你的源仓库上粘贴一个名为 `GH_PAGES_DEPLOY` 的 GitHub secret。如果命令行对你不起作用，请复制文件内容。保存你的 secret。
+6. 在 `.github/workflows/` 目录中创建你的[文档工作流](https://docs.github.com/en/actions/use-cases-and-examples/creating-an-example-workflow)。在此示例中，它是 `deploy.yml` 文件。
+
+此时，你应该有：
+
+- 设置了 GitHub 工作流并将私有 SSH 密钥作为 GitHub Secret 的源仓库，以及
+- 在 GitHub 部署密钥中设置了公共 SSH 密钥的部署仓库。
+
+<details>
+
+<summary>GitHub action 文件</summary>
+
+:::warning
+
+请确保将 `actions@github.com` 替换为你的 GitHub 电子邮件，并将 `gh-actions` 替换为你的名字。
+
+此文件假设你正在使用 Yarn。如果你使用 npm，请相应地将 `cache: yarn`、`yarn install --frozen-lockfile`、`yarn build` 更改为 `cache: npm`、`npm ci`、`npm run build`。
+
+:::
+
+```yml title=".github/workflows/deploy.yml"
+name: Deploy to GitHub Pages
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  test-deploy:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: yarn
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Test build website
+        run: yarn build
+  deploy:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: yarn
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
+      - name: Deploy to GitHub Pages
+        env:
+          USE_SSH: true
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "gh-actions"
+          yarn install --frozen-lockfile
+          yarn deploy
+```
+
+</details>
+
+```mdx-code-block
+</TabItem>
+</Tabs>
+```
+
+<details>
+
+<summary>站点未正确部署？</summary>
+
+推送到 main 后，如果你没有在所需位置看到你的站点发布（例如，它显示“这里没有 GitHub Pages 站点”，或者它正在显示你的仓库的 README.md 文件），请尝试以下操作：
+
+- 等待大约三分钟并刷新。GitHub pages 可能需要几分钟才能获取新文件。
+- 检查你的仓库的登陆页面，查看最后一次提交标题旁边是否有一个绿色的小勾，表示 CI 已通过。如果你看到一个叉，表示构建或部署失败，你应该检查日志以获取更多调试信息。
+- 点击勾，并确保你看到了一个“Deploy to GitHub Pages”工作流。像“pages build and deployment / deploy”这样的名称是 GitHub 的默认工作流，表示你的自定义部署工作流根本没有被触发。确保 YAML 文件放在 `.github/workflows` 文件夹下，并且触发条件设置正确（例如，如果你的默认分支是 "master" 而不是 "main"，你需要更改 `on.push` 属性）。
+- 在你的仓库的 Settings > Pages 下，确保“Source”（这是_部署_文件的来源，而不是我们术语中的“源”）被设置为“gh-pages” + “/ (root)”，因为我们使用 `gh-pages` 作为部署分支。
+
+如果你正在使用自定义域名：
+
+- 如果你正在使用自定义域名，请验证你是否设置了正确的 DNS 记录。请参阅[GitHub pages 关于配置自定义域名的文档](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages)。另外，请注意，DNS 更改可能需要长达 24 小时才能在互联网上传播。
+
+</details>
+
+### 使用 Travis CI 触发部署 {#triggering-deployment-with-travis-ci}
+
+持续集成（CI）服务通常用于在每次新提交检入源代码控制时执行例行任务。这些任务可以是运行单元测试和集成测试、自动化构建、将包发布到 npm 以及将更改部署到你的网站的任意组合。要自动化你的网站部署，你所需要做的就是在你的网站更新时调用 `yarn deploy` 脚本。以下部分介绍了如何使用 [Travis CI](https://travis-ci.com/)（一个流行的持续集成服务提供商）来做到这一点。
+
+1. 转到 https://github.com/settings/tokens 并生成一个新的[个人访问令牌](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/)。创建令牌时，授予它 `repo` 范围，以便它具有所需的权限。
+2. 使用你的 GitHub 帐户，[将 Travis CI 应用添加到](https://github.com/marketplace/travis-ci)你想要激活的仓库。
+3. 打开你的 Travis CI 仪表板。URL 看起来像 `https://travis-ci.com/USERNAME/REPO`，并导航到你的仓库的 `More options > Setting > Environment Variables` 部分。
+4. 创建一个名为 `GH_TOKEN` 的新环境变量，其值为你新生成的令牌，然后是 `GH_EMAIL`（你的电子邮件地址）和 `GH_NAME`（你的 GitHub 用户名）。
+5. 在你的仓库的根目录下创建一个 `.travis.yml`，内容如下：
+
+```yml title=".travis.yml"
+language: node_js
+node_js:
+  - 18
+branches:
+  only:
+    - main
+cache:
+  yarn: true
+script:
+  - git config --global user.name "${GH_NAME}"
+  - git config --global user.email "${GH_EMAIL}"
+  - echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc
+  - yarn install
+  - GIT_USER="${GH_NAME}" yarn deploy
+```
+
+现在，每当有新的提交进入 `main` 分支时，Travis CI 都会运行你的测试套件，如果一切通过，你的网站将通过 `yarn deploy` 脚本进行部署。
+
+### 使用 Buddy 触发部署 {#triggering-deployment-with-buddy}
+
+[Buddy](https://buddy.works/) 是一个易于使用的 CI/CD 工具，允许你自动化将你的门户部署到不同环境，包括 GitHub Pages。
+
+按照这些步骤创建一个管道，每当你将更改推送到项目的选定分支时，该管道就会自动部署你的网站的新版本：
+
+1. 转到 https://github.com/settings/tokens 并生成一个新的[个人访问令牌](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/)。创建令牌时，授予它 `repo` 范围，以便它具有所需的权限。
+2. 登录到你的 Buddy 帐户并创建一个新项目。
+3. 选择 GitHub 作为你的 git 托管提供商，并选择包含你的网站代码的仓库。
+4. 使用左侧导航面板，切换到 `Pipelines` 视图。
+5. 创建一个新管道。定义其名称，将触发模式设置为 `On push`，并选择触发管道执行的分支。
+6. 添加一个 `Node.js` 操作。
+7. 在操作的终端中添加这些命令：
+
+```bash
+GIT_USER=<GH_PERSONAL_ACCESS_TOKEN>
+git config --global user.email "<YOUR_GH_EMAIL>"
+git config --global user.name "<YOUR_GH_USERNAME>"
+yarn deploy
+```
+
+创建这个简单的管道后，每次推送到你选择的分支的新提交都会使用 `yarn deploy` 将你的网站部署到 GitHub Pages。阅读[本指南](https://buddy.works/guides/react-docusaurus)以了解有关为 Docusaurus 设置 CI/CD 管道的更多信息。
+
+### 使用 Azure Pipelines {#using-azure-pipelines}
+
+1. 如果你还没有，请在 [Azure Pipelines](https://azure.microsoft.com/en-us/services/devops/pipelines/) 注册。
+2. 创建一个组织。在组织内，创建一个项目并从 GitHub 连接你的仓库。
+3. 转到 https://github.com/settings/tokens 并生成一个新的[个人访问令牌](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/)，范围为 `repo`。
+4. 在项目页面（看起来像 `https://dev.azure.com/ORG_NAME/REPO_NAME/_build`），使用以下文本创建一个新管道。另外，点击编辑并添加一个名为 `GH_TOKEN` 的新环境变量，其值为你新生成的令牌，然后是 `GH_EMAIL`（你的电子邮件地址）和 `GH_NAME`（你的 GitHub 用户名）。确保将它们标记为机密。或者，你也可以在你的仓库根目录添加一个名为 `azure-pipelines.yml` 的文件。
+
+```yml title="azure-pipelines.yml"
+trigger:
+  - main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+    persistCredentials: true
+
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '18'
+    displayName: Install Node.js
+
+  - script: |
+      git config --global user.name "${GH_NAME}"
+      git config --global user.email "${GH_EMAIL}"
+      git checkout -b main
+      echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc
+      yarn install
+      GIT_USER="${GH_NAME}" yarn deploy
+    env:
+      GH_NAME: $(GH_NAME)
+      GH_EMAIL: $(GH_EMAIL)
+      GH_TOKEN: $(GH_TOKEN)
+    displayName: Install and build
+```
+
+### 使用 Drone {#using-drone}
+
+1. 创建一个新的 SSH 密钥，它将成为你项目的[部署密钥](https://docs.github.com/en/free-pro-team@latest/developers/overview/managing-deploy-keys#deploy-keys)。
+2. 将你的私钥和公钥命名为特定的名称，以免覆盖你的其他 [SSH 密钥](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)。
+3. 转到 `https://github.com/USERNAME/REPO/settings/keys` 并通过粘贴你刚刚生成的公钥来添加一个新的部署密钥。
+4. 打开你的 Drone.io 仪表板并登录。URL 看起来像 `https://cloud.drone.io/USERNAME/REPO`。
+5. 点击仓库，点击激活仓库，并添加一个名为 `git_deploy_private_key` 的 secret，其值为你刚刚生成的私钥。
+6. 在你的仓库的根目录下创建一个 `.drone.yml`，内容如下。
+
+```yml title=".drone.yml"
+kind: pipeline
+type: docker
+trigger:
+  event:
+    - tag
+- name: Website
+  image: node
+  commands:
+    - mkdir -p $HOME/.ssh
+    - ssh-keyscan -t rsa github.com >> $HOME/.ssh/known_hosts
+    - echo "$GITHUB_PRIVATE_KEY" > "$HOME/.ssh/id_rsa"
+    - chmod 0600 $HOME/.ssh/id_rsa
+    - cd website
+    - yarn install
+    - yarn deploy
+  environment:
+    USE_SSH: true
+    GITHUB_PRIVATE_KEY:
+      from_secret: git_deploy_private_key
+```
+
+现在，每当你向 GitHub 推送一个新标签时，此触发器将启动 drone CI 作业来发布你的网站。
+
+## 部署到 Flightcontrol {#deploying-to-flightcontrol}
+
+[Flightcontrol](https://www.flightcontrol.dev/?ref=docusaurus) 是一项服务，可直接从你的 Git 仓库自动构建和部署你的 Web 应用程序到 AWS Fargate。它为你提供了完全访问权限，可以检查和进行基础设施更改，而没有传统 PaaS 的限制。
+
+按照 [Flightcontrol 的 Docusaurus 分步指南](https://www.flightcontrol.dev/docs/reference/examples/docusaurus/?ref=docusaurus)开始。
+
+## 部署到 Koyeb {#deploying-to-koyeb}
+
+[Koyeb](https://www.koyeb.com) 是一个对开发者友好的无服务器平台，可用于在全球范围内部署应用程序。该平台可让你无缝运行 Docker 容器、Web 应用程序和 API，具有基于 git 的部署、原生自动缩放、全球边缘网络以及内置的服务网格和发现功能。查看 [Koyeb 的 Docusaurus 部署指南](https://www.koyeb.com/tutorials/deploy-docusaurus-on-koyeb)以开始。
+
+## 部署到 Render {#deploying-to-render}
+
+[Render](https://render.com) 提供[免费的静态站点托管](https://render.com/docs/static-sites)，具有完全托管的 SSL、自定义域名、全球 CDN 以及从你的 Git 仓库持续自动部署。按照 [Render 的部署 Docusaurus 指南](https://render.com/docs/deploy-docusaurus)在几分钟内开始。
+
+## 部署到 Qovery {#deploying-to-qovery}
+
+[Qovery](https://www.qovery.com) 是一个完全托管的云平台，可在你的 AWS、Digital Ocean 和 Scaleway 帐户上运行，你可以在一个地方托管静态站点、后端 API、数据库、cron 作业和所有其他应用程序。
+
+1. 创建一个 Qovery 帐户。如果你还没有帐户，请访问 [Qovery 仪表板](https://console.qovery.com)创建一个。
+2. 创建一个项目。
+   - 点击 **Create project** 并为你的项目命名。
+   - 点击 **Next**。
+3. 创建一个新环境。
+   - 点击 **Create environment** 并命名（例如 staging、production）。
+4. 添加一个应用程序。
+   - 点击 **Create an application**，命名并选择你的 Docusaurus 应用程序所在的 GitHub 或 GitLab 仓库。
+   - 定义主分支名称和根应用程序路径。
+   - 点击 **Create**。创建应用程序后：
+   - 导航到你的应用程序 **Settings**
+   - 选择 **Port**
+   - 添加你的 Docusaurus 应用程序使用的端口
+5. 部署
+   - 你现在所要做的就是导航到你的应用程序并点击 **Deploy**。
+
+![部署应用](https://hub.qovery.com/img/heroku/heroku-1.png)
+
+就是这样。观察状态并等待应用程序部署完成。要在浏览器中打开应用程序，请在你的应用程序概览中点击 **Action** 和 **Open**。
+
+## 部署到 Hostman {#deploying-to-hostman}
+
+[Hostman](https://hostman.com/) 允许你免费托管静态网站。Hostman 会自动化一切，你只需要连接你的仓库并按照这些简单的步骤操作：
+
+1. 创建一个服务。
+
+   - 要部署 Docusaurus 静态网站，请在你的[仪表板](https://dashboard.hostman.com/)的左上角点击 **Create**，然后选择 **Front-end app or static website**。
+
+2. 选择要部署的项目。
+
+   - 如果你使用你的 GitHub、GitLab 或 Bitbucket 帐户登录 Hostman，你将看到包含你的项目的仓库，包括私有项目。
+
+   - 选择你想要部署的项目。它必须包含项目的文件的目录（例如 `website`）。
+
+   - 要访问不同的仓库，请点击 **Connect another repository**。
+
+   - 如果你没有使用你的 Git 帐户凭据登录，你现在可以访问必要的帐户，然后选择项目。
+
+3. 配置构建设置。
+
+   - 接下来，将出现 **Website customization** 窗口。从框架列表中选择 **Static website** 选项。
+
+   - **Directory with app** 指向构建后将包含项目文件的目录。如果你在第 2 步中选择了包含网站（或 `my_website`）目录内容的仓库，则可以将其留空。
+
+   - Docusaurus 的标准构建命令是：
+
+     ```bash npm2yarn
+     npm run build
+     ```
+
+   - 如果需要，你可以修改构建命令。你可以输入多个由 `&&` 分隔的命令。
+
+4. 部署。
+
+   - 点击 **Deploy** 开始构建过程。
+
+   - 一旦开始，你将进入部署日志。如果代码有任何问题，你将在日志中收到指定问题原因的警告或错误消息。通常，日志包含你需要的所有调试数据。
+
+   - 部署完成后，你将收到一封电子邮件通知，并看到一条日志条目。一切都完成了！你的项目已启动并准备就绪。
+
+## 部署到 Surge {#deploying-to-surge}
+
+Surge 是一个[静态 Web 托管平台](https://surge.sh/help/getting-started-with-surge)，你可以用它在几秒钟内从命令行部署你的 Docusaurus 项目。将你的项目部署到 Surge 既简单又免费（包括自定义域名和 SSL 证书）。
+
+按照以下步骤在几秒钟内使用 Surge 部署你的应用：
+
+1. 首先，使用 npm 运行以下命令安装 Surge：
+   ```bash npm2yarn
+   npm install -g surge
+   ```
+2. 要在你的项目根目录中为生产环境构建站点的静态文件，请运行：
+   ```bash npm2yarn
+   npm run build
+   ```
+3. 然后，在你的项目根目录内运行此命令：
+   ```bash
+   surge build/
+   ```
+
+首次使用 Surge 的用户将被提示从命令行创建一个帐户（这只发生一次）。
+
+确认你想要发布的站点位于 `build` 目录中。总是会给出一个随机生成的子域名 `*.surge.sh subdomain`（可以编辑）。
+
+### 使用你的域名 {#using-your-domain}
+
+如果你有一个域名，你可以使用以下命令部署你的站点：
+
+```bash
+surge build/ your-domain.com
+```
+
+你的站点现在免费部署在 `subdomain.surge.sh` 或 `your-domain.com`，具体取决于你选择的方法。
+
+### 设置 CNAME 文件 {#setting-up-cname-file}
+
+使用以下命令将你的域名存储在 CNAME 文件中以备将来部署：
+
+```bash
+echo subdomain.surge.sh > CNAME
+```
+
+你将来可以使用 `surge` 命令部署任何其他更改。
+
+## 部署到 Stormkit {#deploying-to-stormkit}
+
+你可以将你的 Docusaurus 项目部署到 [Stormkit](https://www.stormkit.io)，这是一个用于静态网站、单页应用程序（SPA）和无服务器功能的部署平台。有关详细说明，请参阅[本指南](https://www.stormkit.io/blog/how-to-deploy-docusarous)。
+
+## 部署到 QuantCDN {#deploying-to-quantcdn}
+
+1. 安装 [Quant CLI](https://docs.quantcdn.io/docs/cli/get-started)
+2. 通过[注册](https://dashboard.quantcdn.io/register)创建一个 QuantCDN 帐户
+3. 使用 `quant init` 初始化你的项目并填写你的凭据：
+   ```bash
+   quant init
+   ```
+4. 部署你的站点。
+   ```bash
+   quant deploy
+   ```
+
+有关部署到 QuantCDN 的更多示例和用例，请参阅[文档](https://docs.quantcdn.io/docs/cli/continuous-integration)和[博客](https://www.quantcdn.io/blog)。
+
+## 部署到 Cloudflare Pages {#deploying-to-cloudflare-pages}
+
+[Cloudflare Pages](https://pages.cloudflare.com/) 是一个 Jamstack 平台，供前端开发人员协作和部署网站。按照[此页面](https://developers.cloudflare.com/pages/framework-guides/deploy-a-docusaurus-site/)在几分钟内开始。
+
+## 部署到 Azure Static Web Apps {#deploying-to-azure-static-web-apps}
+
+[Azure Static Web Apps](https://docs.microsoft.com/en-us/azure/static-web-apps/overview) 是一项服务，可直接从代码仓库自动构建和部署全栈 Web 应用程序到 Azure，从而简化了 CI/CD 的开发人员体验。Static Web Apps 将 Web 应用程序的静态资产与其动态（API）端点分开。静态资产从全球分布的内容服务器提供，使客户端可以使用附近的服务器更快地检索文件。动态 API 使用事件驱动的基于函数的无服务器架构进行扩展，这种架构更具成本效益并按需扩展。按照[这个分步指南](https://dev.to/azure/11-share-content-with-docusaurus-azure-static-web-apps-30hc)在几分钟内开始。
+
+## 部署到 Kinsta {#deploying-to-kinsta}
+
+[Kinsta 静态站点托管](https://kinsta.com/static-site-hosting)可让你免费部署多达 100 个静态站点，具有自定义域名和 SSL、每月 100 GB 带宽以及 260 多个 Cloudflare CDN 位置。
+
+按照我们的 [Kinsta 上的 Docusaurus](https://kinsta.com/docs/docusaurus-example/) 文章，只需点击几下即可开始。
