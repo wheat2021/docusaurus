@@ -1,0 +1,140 @@
+---
+description: Docusaurus 是用 TypeScript 编写的，并提供一流的 TypeScript 支持。
+---
+
+# TypeScript 支持
+
+Docusaurus 是用 TypeScript 编写的，并提供一流的 TypeScript 支持。
+
+最低要求的版本是 **TypeScript 5.1**。
+
+## 初始化 {#initialization}
+
+Docusaurus 支持编写和使用 TypeScript 主题组件。如果初始化模板提供了 TypeScript 变体，您可以通过使用 `--typescript` 标志直接[初始化一个具有完整 TypeScript 支持的站点](./installation.mdx#scaffold-project-website)。
+
+```bash
+npx create-docusaurus@latest my-website classic --typescript
+```
+
+以下是一些关于如何将现有项目迁移到 TypeScript 的指南。
+
+## 设置 {#setup}
+
+将以下包添加到您的项目中：
+
+```bash npm2yarn
+npm install --save-dev typescript @docusaurus/module-type-aliases @docusaurus/tsconfig @docusaurus/types
+```
+
+然后在您的项目根目录添加一个 `tsconfig.json` 文件，内容如下：
+
+```json title="tsconfig.json"
+{
+  "extends": "@docusaurus/tsconfig",
+  "compilerOptions": {
+    "baseUrl": "."
+  }
+}
+```
+
+Docusaurus 不使用这个 `tsconfig.json` 来编译您的项目。添加它只是为了获得更好的编辑器体验，尽管您可以选择自己运行 `tsc` 来对您的代码进行类型检查，或在 CI 上进行。
+
+现在您可以开始编写 TypeScript 主题组件了。
+
+## 为配置文件添加类型 {#typing-config}
+
+在 Docusaurus 中可以使用 TypeScript 配置文件。
+
+```ts title="docusaurus.config.ts"
+import type {Config} from '@docusaurus/types';
+import type * as Preset from '@docusaurus/preset-classic';
+
+// highlight-next-line
+const config: Config = {
+  title: '我的网站',
+  favicon: 'img/favicon.ico',
+
+  /* 您的站点配置在这里 */
+
+  presets: [
+    [
+      'classic',
+      {
+        /* 您的 preset 配置在这里 */
+        // highlight-next-line
+      } satisfies Preset.Options,
+    ],
+  ],
+
+  themeConfig: {
+    /* 您的主题配置在这里 */
+    // highlight-next-line
+  } satisfies Preset.ThemeConfig,
+};
+
+export default config;
+```
+
+<details>
+  <summary>也可以在 <code>.js</code> 文件中使用 [JSDoc 类型注解](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html)：</summary>
+
+默认情况下，Docusaurus TypeScript 配置不会对 JavaScript 文件进行类型检查。
+
+`// @ts-check` 注释确保在运行 `npx tsc` 时配置文件得到正确的类型检查。
+
+```js title="docusaurus.config.js"
+// highlight-next-line
+// @ts-check
+
+// highlight-next-line
+/** @type {import('@docusaurus/types').Config} */
+const config = {
+  tagline: '恐龙很酷',
+  favicon: 'img/favicon.ico',
+
+  /* 您的站点配置在这里 */
+
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      // highlight-next-line
+      /** @type {import('@docusaurus/preset-classic').Options} */
+      (
+        {
+          /* 您的 preset 配置在这里 */
+        }
+      ),
+    ],
+  ],
+  themeConfig:
+    // highlight-next-line
+    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+    (
+      {
+        /* 您的主题配置在这里 */
+      }
+    ),
+};
+
+export default config;
+```
+
+</details>
+
+:::tip
+
+类型注解非常有用，可以帮助您的 IDE 理解配置对象的类型！
+
+最好的 IDE（VS Code、WebStorm、IntelliJ...）将提供良好的自动补全体验。
+
+:::
+
+## Swizzling TypeScript 主题组件 {#swizzling-typescript-theme-components}
+
+对于支持 TypeScript 主题组件的主题，您可以在 `swizzle` 命令的末尾添加 `--typescript` 标志以获取 TypeScript 源代码。例如，以下命令将在 `src/theme/Footer` 中生成 `index.tsx` 和 `styles.module.css`。
+
+```bash npm2yarn
+npm run swizzle @docusaurus/theme-classic Footer -- --typescript
+```
+
+所有官方 Docusaurus 主题都支持 TypeScript 主题组件，包括 [`theme-classic`](./api/themes/theme-classic.mdx)、[`theme-live-codeblock`](./api/themes/theme-live-codeblock.mdx) 和 [`theme-search-algolia`](./api/themes/theme-search-algolia.mdx)。如果您是希望添加 TypeScript 支持的 Docusaurus 主题包作者，请参阅[生命周期 API 文档](./api/plugin-methods/extend-infrastructure.mdx#getTypeScriptThemePath)。

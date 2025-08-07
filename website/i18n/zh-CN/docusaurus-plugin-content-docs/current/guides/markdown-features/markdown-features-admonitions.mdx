@@ -1,0 +1,370 @@
+---
+id: admonitions
+description: 在 Docusaurus Markdown 中处理警告框/标注
+slug: /markdown-features/admonitions
+---
+
+# 警告框
+
+import BrowserWindow from '@site/src/components/BrowserWindow';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import Admonition from '@theme/Admonition';
+
+除了基本的 Markdown 语法，我们还有一种特殊的警告框语法，通过将文本用一组 3 个冒号包裹，后跟一个表示其类型的标签。
+
+示例：
+
+```md
+:::note
+
+一些带有 _Markdown_ `语法`的**内容**。请检查[此 `api`](#)。
+
+:::
+
+:::tip
+
+一些带有 _Markdown_ `语法`的**内容**。请检查[此 `api`](#)。
+
+:::
+
+:::info
+
+一些带有 _Markdown_ `语法`的**内容**。请检查[此 `api`](#)。
+
+:::
+
+:::warning
+
+一些带有 _Markdown_ `语法`的**内容**。请检查[此 `api`](#)。
+
+:::
+
+:::danger
+
+一些带有 _Markdown_ `语法`的**内容**。请检查[此 `api`](#)。
+
+:::
+```
+
+```mdx-code-block
+<BrowserWindow>
+
+:::note
+
+一些带有 _Markdown_ `语法`的**内容**。请检查[此 `api`](#)。
+
+:::
+
+:::tip
+
+一些带有 _Markdown_ `语法`的**内容**。请检查[此 `api`](#)。
+
+:::
+
+:::info
+
+一些带有 _Markdown_ `语法`的**内容**。请检查[此 `api`](#)。
+
+:::
+
+:::warning
+
+一些带有 _Markdown_ `语法`的**内容**。请检查[此 `api`](#)。
+
+:::
+
+:::danger
+
+一些带有 _Markdown_ `语法`的**内容**。请检查[此 `api`](#)。
+
+:::
+
+</BrowserWindow>
+```
+
+## 与 Prettier 一起使用 {#usage-with-prettier}
+
+如果您使用 [Prettier](https://prettier.io) 来格式化您的 Markdown 文件，Prettier 可能会将您的代码自动格式化为无效的警告框语法。为避免此问题，请在开始和结束指令周围添加空行。这也是我们在此处显示的示例都在内容周围有空行的原因。
+
+{/* prettier-ignore */}
+```md
+<!-- Prettier 不会更改此项 -->
+:::note
+
+你好世界
+
+:::
+
+<!-- Prettier 会更改此项 -->
+:::note
+你好世界
+:::
+
+<!-- 为此项 -->
+::: note 你好世界:::
+```
+
+## 指定标题 {#specifying-title}
+
+您还可以指定一个可选的标题。
+
+```md
+:::note[您的标题 **带有** 一些 _Markdown_ `语法`！]
+
+一些**内容**带有一些 _Markdown_ `语法`。
+
+:::
+```
+
+```mdx-code-block
+<BrowserWindow>
+
+:::note[您的标题 **带有** 一些 _Markdown_ `语法`！]
+
+一些**内容**带有一些 _Markdown_ `语法`。
+
+:::
+
+</BrowserWindow>
+```
+
+## 嵌套警告框 {#nested-admonitions}
+
+警告框可以嵌套。为每个父警告框级别使用更多的冒号 `:`。
+
+```md
+:::::info 父级
+
+父级内容
+
+::::danger 子级
+
+子级内容
+
+:::tip 深层子级
+
+深层子级内容
+
+:::
+
+::::
+
+:::::
+```
+
+```mdx-code-block
+<BrowserWindow>
+
+:::::info 父级
+
+父级内容
+
+::::danger 子级
+
+子级内容
+
+:::tip 深层子级
+
+深层子级内容
+
+:::
+
+::::
+
+:::::
+
+</BrowserWindow>
+```
+
+## 带有 MDX 的警告框 {#admonitions-with-mdx}
+
+您也可以在警告框内使用 MDX！
+
+```jsx
+import Tabs from '@theme/Tabs';
+
+import TabItem from '@theme/TabItem';
+
+:::tip[在警告框中使用选项卡]
+
+<Tabs>
+  <TabItem value="apple" label="苹果">这是一个苹果 🍎</TabItem>
+  <TabItem value="orange" label="橙子">这是一个橙子 🍊</TabItem>
+  <TabItem value="banana" label="香蕉">这是一个香蕉 🍌</TabItem>
+</Tabs>
+
+:::
+```
+
+```mdx-code-block
+<BrowserWindow>
+
+:::tip[在警告框中使用选项卡]
+
+<Tabs>
+  <TabItem value="apple" label="苹果">这是一个苹果 🍎</TabItem>
+  <TabItem value="orange" label="橙子">这是一个橙子 🍊</TabItem>
+  <TabItem value="banana" label="香蕉">这是一个香蕉 🍌</TabItem>
+</Tabs>
+
+:::
+
+</BrowserWindow>
+```
+
+## 在 JSX 中使用 {#usage-in-jsx}
+
+在 Markdown 之外，您可以使用 `@theme/Admonition` 组件来获得相同的输出。
+
+```jsx title="MyReactPage.jsx"
+import Admonition from '@theme/Admonition';
+
+export default function MyReactPage() {
+  return (
+    <div>
+      <Admonition type="info">
+        <p>一些信息</p>
+      </Admonition>
+    </div>
+  );
+}
+```
+
+接受的类型与上面相同：`note`、`tip`、`danger`、`info`、`warning`。可选地，您可以通过传递一个 JSX 元素或一个字符串来指定一个图标，或者一个标题：
+
+```jsx title="MyReactPage.jsx"
+<Admonition type="tip" icon="💡" title="您知道吗……">
+  使用插件为项目中最常用的 JSX 元素引入更短的语法。
+</Admonition>
+```
+
+```mdx-code-block
+<BrowserWindow>
+  <Admonition type="tip" icon="💡" title="您知道吗……">
+    使用插件为项目中最常用的 JSX 元素引入更短的语法。
+  </Admonition>
+</BrowserWindow>
+```
+
+## 自定义警告框 {#customizing-admonitions}
+
+警告框有两种可能的自定义方式：**解析**和**渲染**。
+
+### 自定义渲染行为 {#customizing-rendering-behavior}
+
+您可以通过[swizzling](../../swizzling.mdx)来自定义每种警告框类型的渲染方式。您通常可以通过一个简单的包装器来实现您的目标。例如，在下面的示例中，我们仅替换了 `info` 警告框的图标。
+
+```jsx title="src/theme/Admonition.js"
+import React from 'react';
+import Admonition from '@theme-original/Admonition';
+import MyCustomNoteIcon from '@site/static/img/info.svg';
+
+export default function AdmonitionWrapper(props) {
+  if (props.type !== 'info') {
+    return <Admonition title="我的自定义警告框标题" {...props} />;
+  }
+  return <Admonition icon={<MyCustomNoteIcon />} {...props} />;
+}
+```
+
+### 自定义解析行为 {#customizing-parsing-behavior}
+
+警告框是使用 [Remark 插件](./markdown-features-plugins.mdx)实现的。该插件被设计为可配置的。要为特定的内容插件（文档、博客、页面）自定义 Remark 插件，请通过 `admonitions` 键传递选项。
+
+```js title="docusaurus.config.js"
+export default {
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        docs: {
+          admonitions: {
+            keywords: ['note', 'tip', 'info', 'warning', 'danger'],
+            extendDefaults: true,
+          },
+        },
+      },
+    ],
+  ],
+};
+```
+
+该插件接受以下选项：
+
+- `keywords`：可用作警告框类型的关键字数组。
+- `extendDefaults`：提供的选项（如 `keywords`）是否应合并到现有默认值中。默认为 `true`。
+
+`keyword` 将作为 `type` prop 传递给 `Admonition` 组件。
+
+### 自定义警告框类型组件 {#custom-admonition-type-components}
+
+默认情况下，主题不知道如何处理自定义警告框关键字，例如 `:::my-custom-admonition`。您有责任将每个警告框关键字映射到一个 React 组件，以便主题知道如何渲染它们。
+
+如果您通过以下配置注册了一个新的警告框类型 `my-custom-admonition`：
+
+```js title="docusaurus.config.js"
+export default {
+  // ...
+  presets: [
+    [
+      'classic',
+      {
+        // ...
+        docs: {
+          admonitions: {
+            keywords: ['my-custom-admonition'],
+            extendDefaults: true,
+          },
+        },
+      },
+    ],
+  ],
+};
+```
+
+您可以通过创建以下文件来为 `:::my-custom-admonition` 提供相应的 React 组件（不幸的是，由于它不是一个 React 组件文件，因此无法 swizzle）：
+
+```js title="src/theme/Admonition/Types.js"
+import React from 'react';
+import DefaultAdmonitionTypes from '@theme-original/Admonition/Types';
+
+function MyCustomAdmonition(props) {
+  return (
+    <div style={{border: 'solid red', padding: 10}}>
+      <h5 style={{color: 'blue', fontSize: 30}}>{props.title}</h5>
+      <div>{props.children}</div>
+    </div>
+  );
+}
+
+const AdmonitionTypes = {
+  ...DefaultAdmonitionTypes,
+
+  // 在此处添加所有自定义警告框类型...
+  // 如果需要，您也可以覆盖默认类型
+  'my-custom-admonition': MyCustomAdmonition,
+};
+
+export default AdmonitionTypes;
+```
+
+现在您可以在 Markdown 文件中使用您的新警告框关键字，它将被解析并用您的自定义逻辑渲染：
+
+```md
+:::my-custom-admonition[我的标题]
+
+它成功了！
+
+:::
+```
+
+<BrowserWindow>
+
+:::my-custom-admonition[我的标题]
+
+它成功了！
+
+:::
+
+</BrowserWindow>

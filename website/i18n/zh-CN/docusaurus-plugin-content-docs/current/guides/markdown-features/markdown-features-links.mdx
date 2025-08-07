@@ -1,0 +1,52 @@
+---
+id: links
+description: 在 Markdown 中链接到其他页面
+slug: /markdown-features/links
+---
+
+# Markdown 链接
+
+有两种方式可以添加到另一个页面的链接：通过**URL 路径**和**文件路径**。
+
+```md
+- [到另一个文档的 URL 路径](./installation)
+- [到另一个文档的文件路径](./installation.mdx)
+```
+
+URL 路径未经 Docusaurus 处理，您可以将它们视为直接渲染为 `<a href="./installation">`，即它将根据页面的 URL 位置解析，而不是其文件系统位置。
+
+如果您想引用**由同一插件包含的**另一个 Markdown 文件，您可以使用您想链接到的文档的相对路径。Docusaurus 的 Markdown 加载器会将文件路径转换为目标文件的 URL 路径（因此会移除 `.md` 扩展名）。
+
+例如，如果您在 `docs/folder/doc1.md` 中，并且想引用 `docs/folder/doc2.md`、`docs/folder/subfolder/doc3.md` 和 `docs/otherFolder/doc4.md`：
+
+```md title="docs/folder/doc1.md"
+我正在引用一个[文档](doc2.mdx)。
+
+引用另一个[子文件夹中的文档](subfolder/doc3.mdx)。
+
+[相对文档](../otherFolder/doc4.mdx)引用也同样有效。
+```
+
+相对文件路径是相对于当前文件的目录解析的。另一方面，绝对文件路径是相对于**内容根目录**解析的，通常是 `docs/`、`blog/` 或[本地化的](../../i18n/i18n-tutorial.mdx)目录，如 `i18n/zh-Hans/plugin-content-docs/current`。
+
+绝对文件路径也可以相对于站点目录。但是，请注意，以 `/docs/` 或 `/blog/` 开头的链接**不可移植**，因为如果您创建新的文档版本或对其进行本地化，您将需要手动更新它们。
+
+```md
+您可以编写相对于内容根目录（`/docs/`）的[链接](/otherFolder/doc4.mdx)。
+
+您也可以编写相对于站点目录的[链接](/docs/otherFolder/doc4.mdx)，但不推荐这样做。
+```
+
+使用相对_文件_路径（带有 `.md` 扩展名）而不是相对_URL_链接有以下好处：
+
+- 链接在 GitHub 界面和许多 Markdown 编辑器中将继续有效
+- 您可以自定义文件的 slug 而不必更新所有链接
+- 在文件夹之间移动文件可以被您的编辑器跟踪，并且一些编辑器可能会自动更新文件链接
+- [版本化的文档](../docs/versioning.mdx)将链接到完全相同版本的另一个文档
+- 如果您更新 [`trailingSlash` 配置](../../api/docusaurus.config.js.mdx#trailingSlash)，相对 URL 链接很可能会断开
+
+:::warning
+
+Markdown 文件引用仅在源文件和目标文件由同一个插件实例处理时才有效。这是我们 Markdown 处理架构的技术限制，将来会修复。如果您在插件之间链接文件（例如，从博客文章链接到文档页面），您必须使用 URL 链接。
+
+:::

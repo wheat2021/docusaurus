@@ -1,0 +1,373 @@
+---
+id: react
+description: 借助 MDX，在 Docusaurus Markdown 文档中使用 React 的强大功能
+slug: /markdown-features/react
+---
+
+# MDX 和 React
+
+```mdx-code-block
+import BrowserWindow from '@site/src/components/BrowserWindow';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import styles from './markdown-features-react.module.css';
+```
+
+Docusaurus 内置了对 [MDX](https://mdxjs.com/) 的支持，允许您在 Markdown 文件中编写 JSX 并将它们渲染为 React 组件。
+
+请查看 [MDX 文档](https://mdxjs.com/)，了解您可以用 MDX 做的各种酷炫的事情。
+
+:::tip 调试 MDX
+
+MDX 格式非常严格，您可能会遇到编译错误。
+
+使用 **[MDX playground](https://mdxjs.com/playground/)** 来调试它们，并确保您的语法是有效的。
+
+:::
+
+:::info
+
+最流行的格式化工具 Prettier [仅支持旧版的 MDX v1](https://github.com/prettier/prettier/issues/12209)。如果您得到意外的格式化结果，您可能需要在有问题的区域前添加 `{/* prettier-ignore */}`，或将 `*.mdx` 添加到您的 `.prettierignore` 中，直到 Prettier 对 MDX v3 有适当的支持。[MDX 的一位主要作者推荐使用 `remark-cli` 和 `remark-mdx`](https://github.com/orgs/mdx-js/discussions/2067)。
+
+:::
+
+### 导出组件 {#exporting-components}
+
+要在 MDX 文件中定义任何自定义组件，您必须导出它：只有以 `export` 开头的段落才会被解析为组件而不是普通文本。
+
+```jsx
+export const Highlight = ({children, color}) => (
+  <span
+    style={{
+      backgroundColor: color,
+      borderRadius: '2px',
+      color: '#fff',
+      padding: '0.2rem',
+    }}>
+    {children}
+  </span>
+);
+
+<Highlight color="#25c2a0">Docusaurus 绿色</Highlight> 和 <Highlight color="#1877F2">Facebook 蓝色</Highlight> 是我最喜欢的颜色。
+
+我可以在我的 _JSX_ 旁边写 **Markdown**！
+```
+
+注意它如何同时渲染您的 React 组件的标记和 Markdown 语法：
+
+```mdx-code-block
+export const Highlight = ({children, color}) => (
+  <span
+    style={{
+      backgroundColor: color,
+      borderRadius: '2px',
+      color: '#fff',
+      padding: '0.2rem',
+    }}>
+    {children}
+  </span>
+);
+
+<BrowserWindow minHeight={240}>
+
+<><Highlight color="#25c2a0">Docusaurus 绿色</Highlight>
+{` `}和 <Highlight color="#1877F2">Facebook 蓝色</Highlight> 是我最喜欢的颜色。</>
+
+我可以在我的 _JSX_ 旁边写 **Markdown**！
+
+</BrowserWindow>
+```
+
+:::warning MDX 就是 JSX
+
+由于所有文档文件都使用 MDX 解析，任何看起来像 HTML 的东西实际上都是 JSX。因此，如果您需要内联样式一个组件，请遵循 JSX 的风格并提供样式对象。
+
+{/* prettier-ignore */}
+```jsx
+/* 不要这样： */
+<span style="background-color: red">Foo</span>
+/* 应该这样： */
+<span style={{backgroundColor: 'red'}}>Foo</span>
+```
+
+:::
+
+### 导入组件 {#importing-components}
+
+您还可以导入在其他文件中定义的您自己的组件，或通过 npm 安装的第三方组件。
+
+{/* prettier-ignore */}
+```md
+<!-- Docusaurus 主题组件 -->
+import TOCInline from '@theme/TOCInline';
+<!-- 外部组件 -->
+import Button from '@mui/material/Button';
+<!-- 自定义组件 -->
+import BrowserWindow from '@site/src/components/BrowserWindow';
+```
+
+:::tip
+
+`@site` 别名指向您网站的目录，通常是 `docusaurus.config.js` 文件所在的位置。使用别名而不是相对路径（`'../../src/components/BrowserWindow'`）可以避免在移动文件或进行[文档版本控制](../docs/versioning.mdx)和[翻译](../../i18n/i18n-tutorial.mdx)时更新导入路径。
+
+:::
+
+虽然在 Markdown 中声明组件对于简单情况非常方便，但由于编辑器支持有限、解析错误的风险以及可重用性低，维护起来会变得困难。当您的组件涉及复杂的 JS 逻辑时，请使用单独的 `.js` 文件：
+
+```jsx title="src/components/Highlight.js"
+import React from 'react';
+
+export default function Highlight({children, color}) {
+  return (
+    <span
+      style={{
+        backgroundColor: color,
+        borderRadius: '2px',
+        color: '#fff',
+        padding: '0.2rem',
+      }}>
+      {children}
+    </span>
+  );
+}
+```
+
+```md title="markdown-file.mdx"
+import Highlight from '@site/src/components/Highlight';
+
+<Highlight color="#25c2a0">Docusaurus 绿色</Highlight>
+```
+
+:::tip
+
+如果您在很多文件中使用同一个组件，您不需要在每个地方都导入它——可以考虑将其添加到全局作用域中。[见下文](#mdx-component-scope)
+
+:::
+
+### MDX 组件作用域 {#mdx-component-scope}
+
+除了[导入组件](#importing-components)和[导出组件](#exporting-components)之外，在 MDX 中使用组件的第三种方法是**将其注册到全局作用域**，这将使其在每个 MDX 文件中自动可用，无需任何导入语句。
+
+例如，给定这个 MDX 文件：
+
+```md
+- 一个
+- 列表！
+
+还有一些 <Highlight>自定义标记</Highlight>...
+```
+
+它将被编译成一个包含 `ul`、`li`、`p` 和 `Highlight` 元素的 React 组件。`Highlight` 不是一个原生的 html 元素：您需要为其提供您自己的 React 组件实现。
+
+在 Docusaurus 中，MDX 组件作用域由 `@theme/MDXComponents` 文件提供。它本身不是一个 React 组件，不像 `@theme/` 别名下的大多数其他导出：它是一个从像 `Highlight` 这样的标签名到其 React 组件实现的记录。
+
+如果您[swizzle](../../swizzling.mdx)这个组件，您会发现所有已实现的标签，并且您可以通过 swizzling 各个子组件来进一步自定义我们的实现，比如 `@theme/MDXComponents/Code`（用于渲染[Markdown 代码块](./markdown-features-code-blocks.mdx)）。
+
+如果您想注册额外的标签名（如上面的 `<Highlight>` 标签），您应该考虑[包装 `@theme/MDXComponents`](../../swizzling.mdx#wrapping)，这样您就不必维护所有现有的映射。由于 swizzle CLI 尚不允许包装非组件文件，您应该手动创建包装器：
+
+```js title="src/theme/MDXComponents.js"
+import React from 'react';
+// 导入原始映射器
+import MDXComponents from '@theme-original/MDXComponents';
+// highlight-next-line
+import Highlight from '@site/src/components/Highlight';
+
+export default {
+  // 重用默认映射
+  ...MDXComponents,
+  // 将 "<Highlight>" 标签映射到我们的 Highlight 组件
+  // `Highlight` 将接收所有传递给 MDX 中 `<Highlight>` 的 props
+  // highlight-next-line
+  Highlight,
+};
+```
+
+现在，您可以自由地在每个页面中使用 `<Highlight>`，而无需编写导入语句：
+
+```md
+我可以方便地在任何地方使用 <Highlight color="#25c2a0">Docusaurus 绿色</Highlight>！
+```
+
+```mdx-code-block
+<BrowserWindow>
+
+我可以方便地在任何地方使用 <Highlight color="#25c2a0">Docusaurus 绿色</Highlight>！
+
+</BrowserWindow>
+```
+
+:::warning
+
+我们特意使用**大写**的标签名，如 `Highlight`。
+
+从 MDX v3+（Docusaurus v3+）开始，小写的标签名总是被渲染为原生的 html 元素，并且不会使用您提供的任何组件映射。
+
+:::
+
+:::warning
+
+此功能由[`MDXProvider`](https://mdxjs.com/docs/using-mdx/#mdx-provider)提供支持。如果您在 React 页面中导入 Markdown，您必须通过 `MDXContent` 主题组件自己提供此提供者。
+
+```jsx title="src/pages/index.js"
+import React from 'react';
+import FeatureDisplay from './_featureDisplay.mdx';
+// highlight-next-line
+import MDXContent from '@theme/MDXContent';
+
+export default function LandingPage() {
+  return (
+    <div>
+      {/* highlight-start */}
+      <MDXContent>
+        <FeatureDisplay />
+      </MDXContent>
+      {/* highlight-end */}
+    </div>
+  );
+}
+```
+
+如果您不使用 `MDXContent` 包装您导入的 MDX，全局作用域将不可用。
+
+:::
+
+### Markdown 和 JSX 的互操作性 {#markdown-and-jsx-interoperability}
+
+Docusaurus v3 使用 [MDX v3](https://mdxjs.com/blog/v3/)。
+
+[MDX 语法](https://mdxjs.com/docs/what-is-mdx/#mdx-syntax)与 [CommonMark](https://commonmark.org/) 大部分兼容，但更严格，因为您的 `.mdx` 文件可以使用 JSX 并被编译成真正的 React 组件（请查看 [playground](https://mdxjs.com/playground/)）。
+
+一些有效的 CommonMark 功能在 MDX 中将不起作用（[更多信息](https://mdxjs.com/docs/what-is-mdx/#markdown)），特别是：
+
+- 缩进代码块：请改用三个反引号
+- 自动链接（`<http://localhost:3000>`）：请改用常规链接语法（`[http://localhost:3000](http://localhost:3000)`）
+- HTML 语法（`<p style="color: red;">`）：请改用 JSX（`<p style={{color: 'red'}}>`）
+- 未转义的 `{` 和 `<`：请改用 `\` 进行转义（`\{` 和 `\<`）
+
+:::danger 实验性的 CommonMark 支持
+
+Docusaurus v3 使得可以通过以下选项选择加入一个不那么严格、标准的 [CommonMark](https://commonmark.org/) 支持：
+
+- `mdx.format: md` front matter
+- `.md` 文件扩展名结合 `siteConfig.markdown.format: "detect"` 配置
+
+此功能是**实验性的**，目前有一些[限制](https://github.com/facebook/docusaurus/issues/9092)。
+
+:::
+
+## 导入代码片段 {#importing-code-snippets}
+
+您不仅可以导入包含组件定义的文件，还可以将任何代码文件作为原始文本导入，然后插入到代码块中，这得益于 [Webpack raw-loader](https://webpack.js.org/loaders/raw-loader/)。为了使用 `raw-loader`，您首先需要在您的项目中安装它：
+
+```bash npm2yarn
+npm install --save raw-loader
+```
+
+现在您可以按原样从另一个文件导入代码片段：
+
+{/* prettier-ignore */}
+```jsx title="myMarkdownFile.mdx"
+import CodeBlock from '@theme/CodeBlock';
+import MyComponentSource from '!!raw-loader!./myComponent';
+
+<CodeBlock language="jsx">{MyComponentSource}</CodeBlock>
+```
+
+```mdx-code-block
+import CodeBlock from '@theme/CodeBlock';
+import MyComponentSource from '!!raw-loader!@site/src/pages/examples/_myComponent';
+
+<BrowserWindow>
+
+<CodeBlock language="jsx">{MyComponentSource}</CodeBlock>
+
+</BrowserWindow>
+```
+
+有关 `<CodeBlock>` 组件的更多详细信息，请参阅[在 JSX 中使用代码块](./markdown-features-code-blocks.mdx#usage-in-jsx)。
+
+:::note
+
+您必须使用 `<CodeBlock>` 而不是 Markdown 的三个反引号 ` ``` `，因为后者会按原样输出其所有内容，但您在这里想要插入导入的文本。
+
+:::
+
+:::warning
+
+此功能是实验性的，未来可能会有破坏性的 API 更改。
+
+:::
+
+## 导入 Markdown {#importing-markdown}
+
+您可以将 Markdown 文件作为组件使用，并在其他地方导入它们，无论是在 Markdown 文件中还是在 React 页面中。每个 MDX 文件都默认将其页面内容导出为一个 React 组件。在 `import` 语句中，您可以用任何名称默认导入此组件，但它必须遵循 React 的命名规则，以大写字母开头。
+
+按照惯例，使用 **`_` 文件名前缀**将不会创建任何文档页面，并意味着该 Markdown 文件是一个**“部分”**，供其他文件导入。
+
+```md title="_markdown-partial-example.mdx"
+<span>你好 {props.name}</span>
+
+这是来自 `_markdown-partial-example.mdx` 的一些内容文本。
+```
+
+{/* prettier-ignore */}
+```jsx title="someOtherDoc.mdx"
+import PartialExample from './_markdown-partial-example.mdx';
+
+<PartialExample name="Sebastien" />
+```
+
+```mdx-code-block
+import PartialExample from './_markdown-partial-example.mdx';
+
+<BrowserWindow>
+  <PartialExample name="Sebastien" />
+</BrowserWindow>
+```
+
+通过这种方式，您可以在多个页面之间重用内容，避免重复材料。
+
+## 可用导出 {#available-exports}
+
+在 MDX 页面内，以下变量作为全局变量可用：
+
+- `frontMatter`：front matter，作为字符串键和值的记录；
+- `toc`：目录，作为标题树。另请参阅[内联目录](./markdown-features-toc.mdx#inline-table-of-contents)以获取更具体的用例。
+- `contentTitle`：Markdown 标题，即 Markdown 文本中的第一个 `h1` 标题。如果没有（例如，在 front matter 中指定的标题），则为 `undefined`。
+
+```jsx
+import TOCInline from '@theme/TOCInline';
+import CodeBlock from '@theme/CodeBlock';
+
+此页面的目录，序列化后：
+
+<CodeBlock className="language-json">{JSON.stringify(toc, null, 2)}</CodeBlock>
+
+此页面的 front matter：
+
+<ul>
+  {Object.entries(frontMatter).map(([key, value]) => <li key={key}><b>{key}</b>: {value}</li>)}
+</ul>
+
+<p>此页面的标题是：<b>{contentTitle}</b></p>
+```
+
+```mdx-code-block
+import TOCInline from '@theme/TOCInline';
+
+<BrowserWindow>
+
+此页面的目录，序列化后：
+
+<CodeBlock className="language-json">{JSON.stringify(toc, null, 2)}</CodeBlock>
+
+此页面的 front matter：
+
+<ul>
+  {Object.entries(frontMatter).map(([key, value]) => <li key={key}><b>{key}</b>: {value}</li>)}
+</ul>
+
+<p>此页面的标题是：<b>{contentTitle}</b></p>
+
+</BrowserWindow>
+```
