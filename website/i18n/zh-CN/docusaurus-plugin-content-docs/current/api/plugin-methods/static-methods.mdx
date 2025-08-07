@@ -1,0 +1,85 @@
+---
+title: 静态方法
+sidebar_label: 静态方法
+sidebar_position: 4
+---
+
+# 静态方法
+
+静态方法不属于插件实例——它们附加到构造函数上。这些方法用于验证和规范化插件选项和主题配置，然后用作构造函数参数来初始化插件实例。
+
+## `validateOptions({options, validate})` {#validateOptions}
+
+返回经过验证和规范化的插件选项。此方法在插件初始化之前调用。你必须返回选项，因为它们将在初始化期间传递给插件。
+
+### `options` {#options}
+
+`validateOptions` 在调用时会传入传递给插件的 `options`，用于验证和规范化。
+
+### `validate` {#validate}
+
+`validateOptions` 在调用时会传入 `validate` 函数，该函数接受一个 **[Joi](https://www.npmjs.com/package/joi)** 模式和选项作为参数，返回经过验证和规范化的选项。`validate` 会自动处理错误和验证配置。
+
+:::tip
+
+推荐使用 [Joi](https://www.npmjs.com/package/joi) 来验证和规范化选项。
+
+为避免 Joi 版本混淆，请使用 `import {Joi} from '@docusaurus/utils-validation'`
+
+:::
+
+如果你不使用 **[Joi](https://www.npmjs.com/package/joi)**进行验证，可以在选项无效时抛出错误，并在成功时返回选项。
+
+```js title="my-plugin/src/index.js"
+export default function myPlugin(context, options) {
+  return {
+    name: 'docusaurus-plugin',
+    // 其余方法
+  };
+}
+
+// highlight-start
+export function validateOptions({options, validate}) {
+  const validatedOptions = validate(myValidationSchema, options);
+  return validatedOptions;
+}
+// highlight-end
+```
+
+## `validateThemeConfig({themeConfig, validate})` {#validateThemeConfig}
+
+返回经过验证和规范化的主题配置。
+
+### `themeConfig` {#themeConfig}
+
+`validateThemeConfig` 在调用时会传入 `docusaurus.config.js` 中提供的 `themeConfig`，用于验证和规范化。
+
+### `validate` {#validate-1}
+
+`validateThemeConfig` 在调用时会传入 `validate` 函数，该函数接受一个 **[Joi](https://www.npmjs.com/package/joi)** 模式和 `themeConfig` 作为参数，返回经过验证和规范化的选项。`validate` 会自动处理错误和验证配置。
+
+:::tip
+
+推荐使用 [Joi](https://www.npmjs.com/package/joi) 来验证和规范化主题配置。
+
+为避免 Joi 版本混淆，请使用 `import {Joi} from '@docusaurus/utils-validation'`
+
+:::
+
+如果你不使用 **[Joi](https://www.npmjs.com/package/joi)** 进行验证，可以在选项无效时抛出错误。
+
+```js title="my-theme/src/index.js"
+export default function myPlugin(context, options) {
+  return {
+    name: 'docusaurus-plugin',
+    // 其余方法
+  };
+}
+
+// highlight-start
+export function validateThemeConfig({themeConfig, validate}) {
+  const validatedThemeConfig = validate(myValidationSchema, options);
+  return validatedThemeConfig;
+}
+// highlight-end
+```

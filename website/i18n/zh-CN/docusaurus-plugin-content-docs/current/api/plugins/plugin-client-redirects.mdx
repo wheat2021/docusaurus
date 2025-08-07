@@ -1,0 +1,129 @@
+---
+title: plugin-client-redirects
+sidebar_label: plugin-client-redirects
+sidebar_position: 4
+slug: /api/plugins/@docusaurus/plugin-client-redirects
+---
+
+# 📦 plugin-client-redirects
+
+import APITable from '@site/src/components/APITable';
+
+用于生成**客户端重定向**的 Docusaurus 插件。
+
+此插件会向你的静态站点写入额外的 HTML 页面，这些页面使用 JavaScript 将用户重定向到你现有的 Docusaurus 页面。
+
+:::warning 仅限生产环境
+
+此插件在开发中始终处于非活动状态，**仅在生产环境中活动**，因为它作用于构建输出。
+
+:::
+
+:::warning
+
+尽可能使用服务端重定向更好。
+
+在使用此插件之前，你应该检查你的托管服务提供商是否不提供此功能。
+
+:::
+
+## 安装 {#installation}
+
+```bash npm2yarn
+npm install --save @docusaurus/plugin-client-redirects
+```
+
+## 配置 {#configuration}
+
+接受的字段：
+
+```mdx-code-block
+<APITable>
+```
+
+| 选项 | 类型 | 默认值 | 描述 |
+| --- | --- | --- | --- |
+| `fromExtensions` | `string[]` | `[]` | 重定向后要从路由中移除的扩展名。 |
+| `toExtensions` | `string[]` | `[]` | 重定向后要附加到路由的扩展名。 |
+| `redirects` | <code>[RedirectRule](#RedirectRule)[]</code> | `[]` | 重定向规则列表。 |
+| `createRedirects` | <code>[CreateRedirectsFn](#CreateRedirectsFn)</code> | `undefined` | 一个用于创建重定向规则的回调。Docusaurus 会针对它创建的每个路径查询此回调，并使用其返回值输出更多路径。 |
+
+```mdx-code-block
+</APITable>
+```
+
+:::note
+
+当多个文件将被输出到同一位置时，此插件还将读取 [`siteConfig.onDuplicateRoutes`](../docusaurus.config.js.mdx#onDuplicateRoutes) 配置以调整其日志记录级别。
+
+:::
+
+### 类型 {#types}
+
+#### `RedirectRule` {#RedirectRule}
+
+```ts
+type RedirectRule = {
+  to: string;
+  from: string | string[];
+};
+```
+
+:::note
+
+“from” 和 “to” 的概念在此插件中至关重要。“From” 指的是你想要_创建_的路径，即一个将被写入的额外 HTML 文件；“to” 指的是你想要重定向_到_的路径，通常是 Docusaurus 已知的路由。
+
+这就是为什么你可以为同一个“to”设置多个“from”：我们将创建多个都重定向到同一目的地的 HTML 文件。另一方面，一个“from”永远不能有多个“to”：写入的 HTML 文件需要有一个确定的目的地。
+
+:::
+
+#### `CreateRedirectsFn` {#CreateRedirectsFn}
+
+```ts
+// 参数 `path` 是 Docusaurus 已创建的路由。它可以
+// 被视为“to”，你的返回值是“from”。返回一个假值
+// 将不会为此特定路径创建任何重定向页面。
+type CreateRedirectsFn = (path: string) => string[] | string | null | undefined;
+```
+
+### 示例配置 {#ex-config}
+
+这是一个示例配置：
+
+```js title="docusaurus.config.js"
+export default {
+  plugins: [
+    [
+      '@docusaurus/plugin-client-redirects',
+      // highlight-start
+      {
+        fromExtensions: ['html', 'htm'], // /myPage.html -> /myPage
+        toExtensions: ['exe', 'zip'], // /myAsset -> /myAsset.zip (如果后者存在)
+        redirects: [
+          // /docs/oldDoc -> /docs/newDoc
+          {
+            to: '/docs/newDoc',
+            from: '/docs/oldDoc',
+          },
+          // 从多个旧路径重定向到新路径
+          {
+            to: '/docs/newDoc2',
+            from: ['/docs/oldDocFrom2019', '/docs/legacyDocFrom2016'],
+          },
+        ],
+        createRedirects(existingPath) {
+          if (existingPath.includes('/community')) {
+            // 从 /docs/team/X 重定向到 /community/X 以及从 /docs/support/X 重定向到 /community/X
+            return [
+              existingPath.replace('/community', '/docs/team'),
+              existingPath.replace('/community', '/docs/support'),
+            ];
+          }
+          return undefined; // 返回一个假值：不创建重定向
+        },
+      },
+      // highlight-end
+    ],
+  ],
+};
+```

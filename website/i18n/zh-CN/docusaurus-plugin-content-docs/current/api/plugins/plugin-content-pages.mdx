@@ -1,0 +1,162 @@
+---
+title: plugin-content-pages
+sidebar_label: plugin-content-pages
+sidebar_position: 3
+slug: /api/plugins/@docusaurus/plugin-content-pages
+---
+
+# 📦 plugin-content-pages
+
+import APITable from '@site/src/components/APITable';
+
+Docusaurus 的默认页面插件。经典模板附带此插件，并带有默认配置。此插件提供[创建页面](guides/creating-pages.mdx)功能。
+
+## 安装 {#installation}
+
+```bash npm2yarn
+npm install --save @docusaurus/plugin-content-pages
+```
+
+:::tip
+
+如果你使用预设 `@docusaurus/preset-classic`，则无需将此插件作为依赖项安装。
+
+你可以通过[预设选项](../../using-plugins.mdx#docusauruspreset-classic)配置此插件。
+
+:::
+
+## 配置 {#configuration}
+
+接受的字段：
+
+```mdx-code-block
+<APITable>
+```
+
+| 名称 | 类型 | 默认值 | 描述 |
+| --- | --- | --- | --- |
+| `path` | `string` | `'src/pages'` | 文件系统上数据相对于站点目录的路径。此目录中的组件将自动转换为页面。 |
+| `editUrl` | <code>string \| [EditUrlFn](#EditUrlFn)</code> | `undefined` | **仅适用于 Markdown 页面**。用于编辑你网站的基础 URL。最终 URL 由 `editUrl + relativePostPath` 计算得出。使用函数可以对每个文件进行更细致的控制。完全省略此变量将禁用编辑链接。 |
+| `editLocalizedFiles` | `boolean` | `false` | **仅适用于 Markdown 页面**。编辑 URL 将指向本地化文件，而不是原始的未本地化文件。当 `editUrl` 是一个函数时，此选项将被忽略。 |
+| `routeBasePath` | `string` | `'/'` | 你网站页面部分的 URL 路由。**不要**包含尾部斜杠。 |
+| `include` | `string[]` | `['**/*.{js,jsx,ts,tsx,md,mdx}']` | 匹配的文件将被包含和处理。 |
+| `exclude` | `string[]` | _参见示例配置_ | 不会为匹配的文件创建路由。 |
+| `mdxPageComponent` | `string` | `'@theme/MDXPage'` | 每个 MDX 页面使用的组件。 |
+| `remarkPlugins` | `[]` | `any[]` | 传递给 MDX 的 Remark 插件。 |
+| `rehypePlugins` | `[]` | `any[]` | 传递给 MDX 的 Rehype 插件。 |
+| `recmaPlugins` | `any[]` | `[]` | 传递给 MDX 的 Recma 插件。 |
+| `beforeDefaultRemarkPlugins` | `any[]` | `[]` | 在默认 Docusaurus Remark 插件之前传递给 MDX 的自定义 Remark 插件。 |
+| `beforeDefaultRehypePlugins` | `any[]` | `[]` | 在默认 Docusaurus Rehype 插件之前传递给 MDX 的自定义 Rehype 插件。 |
+| `showLastUpdateAuthor` | `boolean` | `false` | **仅适用于 Markdown 页面**。是否显示最后更新页面的作者。 |
+| `showLastUpdateTime` | `boolean` | `false` | **仅适用于 Markdown 页面**。是否显示页面最后更新的日期。这需要在构建期间访问 git 历史记录，因此在浅克隆（CI 系统的常见默认设置）中将无法正常工作。对于 GitHub `actions/checkout`，请使用 `fetch-depth: 0`。 |
+
+```mdx-code-block
+</APITable>
+```
+
+### 类型 {#types}
+
+#### `EditUrlFn` {#EditUrlFn}
+
+```ts
+type EditUrlFunction = (params: {
+  blogDirPath: string;
+  blogPath: string;
+  permalink: string;
+  locale: string;
+}) => string | undefined;
+```
+
+### 示例配置 {#ex-config}
+
+你可以通过预设选项或插件选项来配置此插件。
+
+:::tip
+
+大多数 Docusaurus 用户通过预设选项配置此插件。
+
+:::
+
+```js config-tabs
+// 预设选项：pages
+// 插件选项：@docusaurus/plugin-content-pages
+
+const config = {
+  path: 'src/pages',
+  routeBasePath: '',
+  include: ['**/*.{js,jsx,ts,tsx,md,mdx}'],
+  exclude: [
+    '**/_*.{js,jsx,ts,tsx,md,mdx}',
+    '**/_*/**',
+    '**/*.test.{js,jsx,ts,tsx}',
+    '**/__tests__/**',
+  ],
+  mdxPageComponent: '@theme/MDXPage',
+  remarkPlugins: [require('./my-remark-plugin')],
+  rehypePlugins: [],
+  beforeDefaultRemarkPlugins: [],
+  beforeDefaultRehypePlugins: [],
+};
+```
+
+## Markdown front matter {#markdown-front-matter}
+
+Markdown 页面可以使用以下 Markdown [front matter](../../guides/markdown-features/markdown-features-intro.mdx#front-matter) 元数据字段，两侧用一行 `---` 包围。
+
+接受的字段：
+
+```mdx-code-block
+<APITable>
+```
+
+| 名称 | 类型 | 默认值 | 描述 |
+| --- | --- | --- | --- |
+| `title` | `string` | Markdown 标题 | 博客文章标题。 |
+| `description` | `string` | Markdown 内容的第一行 | 你的页面描述，将成为 `<head>` 中的 `<meta name="description" content="..."/>` 和 `<meta property="og:description" content="..."/>`，供搜索引擎使用。 |
+| `keywords` | `string[]` | `undefined` | 关键字元标签，将成为 `<head>` 中的 `<meta name="keywords" content="keyword1,keyword2,..."/>`，供搜索引擎使用。 |
+| `image` | `string` | `undefined` | 封面或缩略图，将用作 `<head>` 中的 `<meta property="og:image" content="..."/>`，以增强社交媒体和消息传递平台上的链接预览。 |
+| `slug` | `string` | 文件路径 | 允许自定义页面 URL (`/<routeBasePath>/<slug>`)。支持多种模式：`slug: my-page`、`slug: /my/page`、`slug: /`。 |
+| `wrapperClassName` | `string` |  | 要添加到包装器元素的类名，以允许定位特定页面内容。 |
+| `hide_table_of_contents` | `boolean` | `false` | 是否隐藏右侧的目录。 |
+| `draft` | `boolean` | `false` | 草稿页面仅在开发期间可用。 |
+| `unlisted` | `boolean` | `false` | 未列出的页面在开发和生产中都可用。它们在生产中将被“隐藏”，不被索引，从站点地图中排除，并且只能通过直接链接访问。 |
+
+```mdx-code-block
+</APITable>
+```
+
+示例：
+
+```md
+---
+title: Markdown Page
+description: Markdown page SEO description
+wrapperClassName: markdown-page
+hide_table_of_contents: false
+draft: true
+slug: /markdown-page
+---
+
+Markdown page content
+```
+
+## i18n {#i18n}
+
+首先阅读 [i18n 介绍](../../i18n/i18n-introduction.mdx)。
+
+### 翻译文件位置 {#translation-files-location}
+
+- **基础路径**：`website/i18n/[locale]/docusaurus-plugin-content-pages`
+- **多实例路径**：`website/i18n/[locale]/docusaurus-plugin-content-pages-[pluginId]`
+- **JSON 文件**：使用 [`docusaurus write-translations`](../../cli.mdx#docusaurus-write-translations-sitedir) 提取
+- **Markdown 文件**：`website/i18n/[locale]/docusaurus-plugin-content-pages`
+
+### 文件系统结构示例 {#example-file-system-structure}
+
+```bash
+website/i18n/[locale]/docusaurus-plugin-content-pages
+│
+│ # website/src/pages 的翻译
+├── first-markdown-page.md
+└── second-markdown-page.md
+```

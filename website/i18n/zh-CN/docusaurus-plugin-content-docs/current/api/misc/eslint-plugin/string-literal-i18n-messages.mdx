@@ -1,0 +1,52 @@
+---
+title: string-literal-i18n-messages
+sidebar_label: string-literal-i18n-messages
+slug: /api/misc/@docusaurus/eslint-plugin/string-literal-i18n-messages
+---
+
+# string-literal-i18n-messages
+
+强制在纯文本标签上调用翻译 API。
+
+Docusaurus 提供了 [`docusaurus write-translations`](../../../cli.mdx#docusaurus-write-translations-sitedir) API，该 API 会静态提取标记为可翻译的文本标签。在 `<Translate>` 或 `translate()` 调用中使用的动态值将无法被提取。此规则将确保所有翻译调用都是可静态提取的。
+
+## 规则详情 {#details}
+
+此规则的**不正确**代码示例：
+
+```js
+const text = 'Some text to be translated'
+
+// 无效的 <Translate> 子元素
+<Translate>{text}</Translate>
+
+// 无效的 message 属性
+translate({message: text})
+```
+
+此规则的**正确**代码示例：
+
+```js
+// 有效的 <Translate> 子元素
+<Translate>Some text to be translated</Translate>
+
+// 有效的 message 属性
+translate({message: 'Some text to be translated'})
+
+// 使用 values 对象作为 prop 的有效 <Translate> 子元素
+<Translate values={{firstName: 'Sébastien'}}>
+  {'Welcome, {firstName}! How are you?'}
+</Translate>
+
+// 使用 values 对象作为第二个参数的有效 message 属性
+translate({message: 'The logo of site {siteName}'}, {siteName: 'Docusaurus'})
+```
+
+## 何时不使用 {#when-not-to-use}
+
+如果你不使用 [i18n 功能](../../../i18n/i18n-introduction.mdx)，可以禁用此规则。
+
+## 延伸阅读 {#further-reading}
+
+- https://docusaurus.io/docs/docusaurus-core#translate
+- https://docusaurus.io/docs/docusaurus-core#translate-imperative
