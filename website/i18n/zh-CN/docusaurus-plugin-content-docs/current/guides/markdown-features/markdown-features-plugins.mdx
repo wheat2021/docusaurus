@@ -1,0 +1,247 @@
+---
+id: plugins
+description: 使用 MDX 插件扩展 Docusaurus 的 Markdown 功能
+slug: /markdown-features/plugins
+---
+
+# MDX 插件
+
+有时，您可能想要扩展或调整您的 Markdown 语法。例如：
+
+- 如何使用图片语法 (`![](https://youtu.be/yKNxeF4KMsY)`) 嵌入 YouTube 视频？
+- 如何为单独成行的链接设置不同样式，例如社交卡片？
+- 如何让每个页面都以版权声明开头？
+
+答案是：创建一个 MDX 插件！MDX 有一个内置的[插件系统](https://mdxjs.com/advanced/plugins/)，可用于自定义 Markdown 文件的解析和转换为 JSX 的方式。MDX 插件有三种典型用例：
+
+- 使用现有的 [remark 插件](https://github.com/remarkjs/remark/blob/main/doc/plugins.md#list-of-plugins)或 [rehype 插件](https://github.com/rehypejs/rehype/blob/main/doc/plugins.md#list-of-plugins)；
+- 创建 remark/rehype 插件来转换由现有 MDX 语法生成的元素；
+- 创建 remark/rehype 插件来为 MDX 引入新的语法。
+
+如果您玩过 [MDX 演练场](https://mdxjs.com/playground/)，您会注意到 MDX 的转译有两个中间步骤：Markdown AST (MDAST) 和 Hypertext AST (HAST)，然后才得到最终的 JSX 输出。MDX 插件也以两种形式存在：
+
+- **[Remark](https://github.com/remarkjs/remark/)**：处理 Markdown AST。
+- **[Rehype](https://github.com/rehypejs/rehype/)**：处理 Hypertext AST。
+
+:::tip
+
+使用插件为您项目中常用到的 JSX 元素引入更短的语法。我们提供的[提示框](./markdown-features-admonitions.mdx)语法也是由一个 Remark 插件生成的，您可以为自己的用例做同样的事情。
+
+:::
+
+## 默认插件 {#default-plugins}
+
+Docusaurus 在 Markdown 处理过程中注入了[一些默认的 Remark 插件](https://github.com/facebook/docusaurus/tree/main/packages/docusaurus-mdx-loader/src/remark)。这些插件会：
+
+- 生成目录；
+- 为每个标题添加锚点链接；
+- 将图片和链接转换为 `require()` 调用。
+- …
+
+这些都是 Remark 插件的典型用例，如果您想实现自己的插件，它们也可以成为灵感的来源。
+
+## 安装插件 {#installing-plugins}
+
+MDX 插件通常是一个 npm 包，所以您可以像其他 npm 包一样使用 npm 安装它们。以[数学插件](./markdown-features-math-equations.mdx)为例。
+
+```bash npm2yarn
+npm install --save remark-math@5 rehype-katex@6
+```
+
+<details>
+  <summary><code>remark-math</code> 和 <code>rehype-katex</code> 有什么不同？</summary>
+
+如果您想知道 Remark 和 Rehype 有何不同，这里有一个很好的例子。`remark-math` 操作的是 Markdown AST，它看到像 `$...$` 这样的文本，所做的只是将其转换为 JSX `<span class="math math-inline">...</span>`，而不会对内容做太多处理。这将数学公式的提取与其渲染解耦，这意味着您可以通过更换 Rehype 插件，用其他数学渲染器（如 MathJax，使用 [`rehype-mathjax`](https://github.com/remarkjs/remark-math/tree/main/packages/rehype-mathjax)）替换 $\KaTeX$。
+
+接下来，`rehype-katex` 操作的是 Hypertext AST，其中所有内容都已被转换为类似 HTML 的标签。它遍历所有带有 `math` 类的元素，并使用 $\KaTeX$ 解析内容并将其渲染为实际的 HTML。
+
+</details>
+
+:::warning
+
+许多官方的 Remark/Rehype 插件都是[**仅限 ES 模块**](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c)的，这是一个 Docusaurus 支持的 JavaScript 模块系统。我们建议使用**ES 模块**配置文件，以便更容易地导入此类包。
+
+:::
+
+接下来，导入您的插件，并通过 `docusaurus.config.js` 中的插件或预设配置将它们添加到插件选项中：
+
+```js title="docusaurus.config.js"
+// highlight-start
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+// highlight-end
+
+// highlight-start
+export default {
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        docs: {
+          path: 'docs',
+          // highlight-start
+          remarkPlugins: [remarkMath],
+          rehypePlugins: [rehypeKatex],
+          // highlight-end
+        },
+      },
+    ],
+  ],
+};
+```
+
+<details>
+  <summary>要使用 [**CommonJS**](https://nodejs.org/api/modules.html#modules-commonjs-modules) 配置文件吗？</summary>
+
+如果您决定使用 CommonJS 配置文件，可以通过动态导入和异步配置创建函数来加载这些 ES 模块插件：
+
+```js title="docusaurus.config.js"
+// highlight-start
+module.exports = async function createConfigAsync() {
+  // highlight-end
+  return {
+    presets: [
+      [
+        '@docusaurus/preset-classic',
+        {
+          docs: {
+            path: 'docs',
+            // highlight-start
+            remarkPlugins: [(await import('remark-math')).default],
+            rehypePlugins: [(await import('rehype-katex')).default],
+            // highlight-end
+          },
+        },
+      ],
+    ],
+  };
+};
+```
+
+</details>
+
+## 配置插件 {#configuring-plugins}
+
+一些插件可以被配置并接受它们自己的选项。在这种情况下，请使用 `[plugin, pluginOptions]` 语法，如下所示：
+
+```js title="docusaurus.config.js"
+import rehypeKatex from 'rehype-katex';
+
+export default {
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        docs: {
+          rehypePlugins: [
+            // highlight-start
+            [rehypeKatex, {strict: false}],
+            // highlight-end
+          ],
+        },
+      },
+    ],
+  ],
+};
+```
+
+您应该查看插件的文档以了解其支持的选项。
+
+## 创建新的 rehype/remark 插件 {#creating-new-rehyperemark-plugins}
+
+如果没有现有的包能满足您的定制需求，您可以创建自己的 MDX 插件。
+
+:::note
+
+下面的文章**并非**旨在成为创建插件的全面指南，而只是说明如何使其与 Docusaurus 配合工作。请访问 [Remark](https://github.com/remarkjs/remark/blob/main/doc/plugins.md#create-plugins) 或 [Rehype](https://github.com/rehypejs/rehype/blob/main/doc/plugins.md#create-plugins) 文档，以更深入地了解它们的工作原理。
+
+:::
+
+例如，让我们制作一个插件，它会访问每个 `h2` 标题并添加一个 `Section X. ` 前缀。首先，在任何地方创建您的插件源文件——您甚至可以将其作为单独的 npm 包发布，并像上面解释的那样安装它。我们会将我们的放在 `src/remark/section-prefix.js`。一个 remark/rehype 插件只是一个接收 `options` 并返回一个在 AST 上操作的 `transformer` 的函数。
+
+```js "src/remark/section-prefix.js"
+import {visit} from 'unist-util-visit';
+
+const plugin = (options) => {
+  const transformer = async (ast) => {
+    let number = 1;
+    visit(ast, 'heading', (node) => {
+      if (node.depth === 2 && node.children.length > 0) {
+        node.children.unshift({
+          type: 'text',
+          value: `Section ${number}. `,
+        });
+        number++;
+      }
+    });
+  };
+  return transformer;
+};
+
+export default plugin;
+```
+
+现在您可以在 `docusaurus.config.js` 中导入您的插件，并像使用已安装的插件一样使用它！
+
+```js title="docusaurus.config.js"
+// highlight-next-line
+import sectionPrefix from './src/remark/section-prefix';
+
+export default {
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        docs: {
+          // highlight-next-line
+          remarkPlugins: [sectionPrefix],
+        },
+      },
+    ],
+  ],
+};
+```
+
+:::tip
+
+`transformer` 有第二个参数 [`vfile`](https://github.com/vfile/vfile)，如果您需要访问当前 Markdown 文件的路径，这将非常有用。
+
+```js
+const plugin = (options) => {
+  const transformer = async (ast, vfile) => {
+    ast.children.unshift({
+      type: 'text',
+      value: `The current file path is ${vfile.path}`,
+    });
+  };
+  return transformer;
+};
+```
+
+例如，我们的 `transformImage` 插件使用此参数将相对图片引用转换为 `require()` 调用。
+
+:::
+
+:::note
+
+Docusaurus 的默认插件会在自定义 remark 插件之前运行，这意味着图片或链接已经被转换为带有 `require()` 调用的 JSX。例如，在上面的示例中，即使所有 `h2` 标题现在都以 `Section X.` 为前缀，生成的目录仍然是相同的，因为 TOC 生成插件在我们的自定义插件之前被调用。如果您需要在默认插件之前处理 MDAST，请使用 `beforeDefaultRemarkPlugins` 和 `beforeDefaultRehypePlugins`。
+
+```js title="docusaurus.config.js"
+export default {
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        docs: {
+          // highlight-next-line
+          beforeDefaultRemarkPlugins: [sectionPrefix],
+        },
+      },
+    ],
+  ],
+};
+```
+
+这将使生成的目录也包含 `Section X.` 前缀。
+
+:::

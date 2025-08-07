@@ -1,0 +1,1027 @@
+---
+slug: /migration/v3
+sidebar_label: 升级到 Docusaurus v3
+---
+
+# 升级到 Docusaurus v3
+
+本文档将帮助您将站点从 Docusaurus v2 升级到 Docusaurus v3。
+
+Docusaurus v3 是一个新的**主版本**，包含**破坏性变更**，需要您相应地调整您的站点。我们将在此过程中为您提供指导，并提及一些可选的建议。
+
+这不是一次完全重写，破坏性变更相对容易处理。最简单的站点最终只需更新其 npm 依赖项即可升级。
+
+主要的破坏性变更是从 MDX v1 升级到 MDX v3。有关详细信息，请阅读 [**MDX v2**](https://mdxjs.com/blog/v2/) 和 [**MDX v3**](https://mdxjs.com/blog/v3/) 的发布说明。MDX 现在将以**更严格**的方式和**细微的差异**编译您的 Markdown 内容。
+
+:::tip 升级前
+
+在升级之前，我们建议[**为 Docusaurus v3 准备您的站点**](/blog/preparing-your-site-for-docusaurus-v3)。有些更改您可以在 Docusaurus v2 下**增量处理**。这样做有助于减少最终升级到 Docusaurus v3 所需的工作量。
+
+对于复杂的站点，我们还建议设置[**视觉回归测试**](/blog/upgrading-frontend-dependencies-with-confidence-using-visual-regression-testing)，这是确保您的站点在视觉上保持一致的好方法。Docusaurus v3 主要升级依赖项，预计不会产生任何视觉变化。
+
+:::
+
+:::note
+
+查看 [**Docusaurus v3.0.0**](https://github.com/facebook/docusaurus/releases/tag/v3.0.0) 的发布说明，并浏览拉取请求以获取更多有用的信息以及此处提到的每个更改背后的动机。
+
+:::
+
+## 升级依赖项
+
+升级到 Docusaurus v3 需要升级核心 Docusaurus 依赖项 (`@docusaurus/name`)，以及其他相关包。
+
+Docusaurus v3 现在使用以下依赖项：
+
+- Node.js v18.0+
+- React v18.0+
+- MDX v3.0+
+- TypeScript v5.1+
+- prism-react-renderer v2.0+
+- react-live v4.0+
+- remark-emoji v4.0+
+- mermaid v10.4+
+
+:::warning 升级社区插件
+
+如果您的站点使用第三方社区插件和主题，您可能需要升级它们。
+
+在尝试升级之前，请确保这些插件与 Docusaurus v3 兼容。
+
+:::
+
+一个典型的 `package.json` 依赖项升级示例：
+
+```diff title="package.json"
+ {
+   "dependencies": {
+     // 升级到 Docusaurus v3
+-    "@docusaurus/core": "2.4.3",
+-    "@docusaurus/preset-classic": "2.4.3",
++    "@docusaurus/core": "3.0.0",
++    "@docusaurus/preset-classic": "3.0.0",
+     // 升级到 MDX v3
+-    "@mdx-js/react": "^1.6.22",
++    "@mdx-js/react": "^3.0.0",
+     // 升级到 prism-react-renderer v2.0+
+-    "prism-react-renderer": "^1.3.5",
++    "prism-react-renderer": "^2.1.0",
+     // 升级到 React v18.0+
+-    "react": "^17.0.2",
+-    "react-dom": "^17.0.2"
++    "react": "^18.2.0",
++    "react-dom": "^18.2.0"
+   },
+   "devDependencies": {
+     // 将 Docusaurus 开发依赖项升级到 v3
+-    "@docusaurus/module-type-aliases": "2.4.3",
+-    "@docusaurus/types": "2.4.3"
++    "@docusaurus/module-type-aliases": "3.0.0",
++    "@docusaurus/types": "3.0.0"
+   }
+   "engines": {
+     // 要求 Node.js 18.0+
+-    "node": ">=16.14"
++    "node": ">=18.0"
+   }
+ }
+```
+
+对于 TypeScript 用户：
+
+```diff title="package.json"
+ {
+   "devDependencies": {
+     // 将外部 TypeScript 配置包替换为新的官方包
+-    "@tsconfig/docusaurus": "^1.0.7",
++    "@docusaurus/tsconfig": "3.0.0",
+     // 将 React 类型升级到 v18.0+
+-    "@types/react": "^17.0.69",
++    "@types/react": "^18.2.29",
+     // 将 TypeScript 升级到 v5.1+
+-    "typescript": "~4.7.4"
++    "typescript": "~5.2.2"
+   }
+ }
+```
+
+## 升级 MDX
+
+MDX 是 Docusaurus 的一个主要依赖项，负责将您的 `.md` 和 `.mdx` 文件编译为 React 组件。
+
+从 MDX v1 到 MDX v3 的过渡是采用 Docusaurus v3 的**主要挑战**。大多数破坏性变更来自 MDX v2，而 MDX v3 是一个相对较小的版本。
+
+一些在 Docusaurus v2 下成功编译的文档现在可能在 Docusaurus v3 下**编译失败**。
+
+:::tip 提前发现有问题的内容
+
+在您的站点上运行 [`npx docusaurus-mdx-checker`](https://github.com/slorber/docusaurus-mdx-checker) 以获取在 Docusaurus v3 下会编译失败的文件列表。
+
+这个命令也是估算使您的内容兼容所需工作量的好方法。请记住，大部分工作可以在升级前通过[为 Docusaurus v3 准备您的内容](/blog/preparing-your-site-for-docusaurus-v3)来完成。
+
+:::
+
+其他文档也可能**渲染得不同**。
+
+:::tip 使用视觉回归测试
+
+对于大型站点，手动审查所有页面很复杂，我们建议您设置[视觉回归测试](https://docusaurus.io/blog/upgrading-frontend-dependencies-with-confidence-using-visual-regression-testing)。
+
+:::
+
+升级 MDX 伴随着 [MDX v2](https://mdxjs.com/blog/v2/) 和 [MDX v3](https://mdxjs.com/blog/v3/) 发布博文中记录的所有破坏性变更。大多数破坏性变更来自 MDX v2，而 MDX v3 是一个相对较小的版本。[MDX v2 迁移指南](https://mdxjs.com/migrating/v2/)中有一个关于如何[更新 MDX 文件](https://mdxjs.com/migrating/v2/#update-mdx-files)的部分，这对我们尤其重要。也请务必阅读[MDX 故障排除](https://mdxjs.com/docs/troubleshooting-mdx/)页面，它可以帮助您解释常见的 MDX 错误消息。
+
+请务必阅读我们更新的[**MDX 和 React**](../guides/markdown-features/markdown-features-react.mdx) 文档页面。
+
+### 使用 MDX 演练场
+
+MDX 演练场是您的新好朋友。它允许您了解您的内容是如何**编译为 React 组件**的，并独立地排查编译或渲染问题。
+
+- [MDX 演练场 - 当前版本](https://mdxjs.com/playground/)
+- [MDX 演练场 - v1](https://mdx-git-renovate-babel-monorepo-mdx.vercel.app/playground/)
+
+<details>
+  <summary>为 Docusaurus 配置 MDX 演练场选项</summary>
+
+要在 [MDX 演练场](https://mdxjs.com/playground/)上获得与 Docusaurus v2 使用的编译行为相似的效果，请打开这些选项：
+
+- 使用 `MDX`
+- 使用 `remark-gfm`
+- 使用 `remark-directive`
+
+![MDX 演练场选项面板的屏幕截图，仅勾选了“使用 `MDX`”、“使用 `remark-gfm`”和“使用 `remark-directive`”选项](@site/blog/2023/09-29-preparing-your-site-for-docusaurus-v3/img/mdx2-playground-options.png)
+
+</details>
+
+并排使用两个 MDX 演练场，您很快就会注意到一些内容在 v2 中的编译方式不同或编译失败。
+
+:::tip 让您的内容面向未来
+
+目标是重构您有问题的内容，使其**在两个版本的 MDX 中都能正常工作**。这样，当您升级到 Docusaurus v3 时，这些内容将已经开箱即用。
+
+:::
+
+### 使用 MDX 检查器 CLI
+
+我们提供了一个 [docusaurus-mdx-checker](https://github.com/slorber/docusaurus-mdx-checker) CLI，可以轻松发现有问题的内容。在您的站点上运行此命令，以获取在 MDX v3 下会编译失败的文件列表。
+
+```bash
+npx docusaurus-mdx-checker
+```
+
+对于每个编译问题，CLI 将记录文件路径和要查看的行号。
+
+![显示示例 MDX 检查器 CLI 输出的终端屏幕截图，其中包含一些错误消息](@site/blog/2023/09-29-preparing-your-site-for-docusaurus-v3/img/mdx-checker-output.png)
+
+:::tip
+
+使用此 CLI 估算使您的内容与 MDX v3 兼容所需的工作量。
+
+:::
+
+:::warning
+
+此 CLI 是尽力而为的，**只会报告编译错误**。
+
+它不会报告不产生错误但可能影响内容显示的细微编译更改。要捕捉这些问题，我们建议使用[视觉回归测试](/blog/upgrading-frontend-dependencies-with-confidence-using-visual-regression-testing)。
+
+:::
+
+### 常见的 MDX 问题
+
+Docusaurus 无法详尽地记录 MDX 带来的所有更改。这是 [MDX v2](https://mdxjs.com/migrating/v2/) 和 [MDX v3](https://mdxjs.com/migrating/v3/) 迁移指南的责任。
+
+然而，通过升级几个 Docusaurus 站点，我们注意到大多数问题归结为我们为您记录的少数几个案例。
+
+#### `{` 的错误使用
+
+`{` 字符用于打开[JavaScript 表达式](https://mdxjs.com/docs/what-is-mdx/#expressions)。如果 `{expression}` 中的内容不是有效的表达式，MDX 现在将失败。
+
+```md title="example.md"
+对象形状看起来像 {username: string, age: number}
+```
+
+:::danger 错误消息
+
+> Could not parse expression with acorn: Unexpected content after expression
+
+:::
+
+:::tip 如何升级
+
+修复此错误的可用选项：
+
+- 使用行内代码：`{username: string, age: number}`
+- 使用 HTML 代码：`&#123;`
+- 转义它：`\{`
+
+:::
+
+#### `<` 的错误使用
+
+`<` 字符用于打开[JSX 标签](https://mdxjs.com/docs/what-is-mdx/#jsx)。如果 MDX 认为您的 JSX 无效，它现在将失败。
+
+```md title="example.md"
+使用 Android 版本 <5
+
+您可以使用像 Array<T> 这样的泛型类型
+
+遵循模板 "Road to <YOUR_MINOR_VERSION>"
+```
+
+:::danger 错误消息
+
+> Unexpected character `5` (U+0035) before name, expected a character that can start a name, such as a letter, `$`, or `_`
+
+> Expected a closing tag for `<T>` (1:6-1:9) before the end of `paragraph` end-tag-mismatch mdast-util-mdx-jsx
+
+> Expected a closing tag for `<YOUR_MINOR_VERSION>` (134:19-134:39) before the end of `paragraph`
+
+:::
+
+:::tip 如何升级
+
+修复此错误的可用选项：
+
+- 使用行内代码：`Array<T>`
+- 使用 HTML 代码：`&lt;` 或 `&#60;`
+- 转义它：`\<`
+
+:::
+
+#### GFM 自动链接的错误使用
+
+Docusaurus 支持 [GitHub Flavored Markdown (GFM)](https://github.github.com/gfm/)，但 MDX 不再支持使用 `<link>` 语法的[自动链接](https://github.github.com/gfm/#autolinks)。
+
+```md title="example.md"
+<sebastien@thisweekinreact.com>
+
+<http://localhost:3000>
+```
+
+:::danger 错误消息
+
+> Unexpected character `@` (U+0040) in name, expected a name character such as letters, digits, `$`, or `_`; whitespace before attributes; or the end of the tag (note: to create a link in MDX, use `[text](url)`)
+
+> Unexpected character `/` (U+002F) before local name, expected a character that can start a name, such as a letter, `$`, or `_` (note: to create a link in MDX, use `[text](url)`)
+
+:::
+
+:::tip 如何升级
+
+使用常规的 Markdown 链接，或删除 `<` 和 `>`。MDX 和 GFM 已经能够自动链接字面量。
+
+{/* prettier-ignore */}
+```md title="example.md"
+sebastien@thisweekinreact.com
+[sebastien@thisweekinreact.com](mailto:sebastien@thisweekinreact.com)
+
+http://localhost:3000
+[http://localhost:3000](http://localhost:3000)
+```
+
+:::
+
+#### 小写 MDXComponent 映射
+
+对于提供[自定义 `MDXComponent` 映射](../guides/markdown-features/markdown-features-react.mdx#mdx-component-scope)的用户，组件现在是“沙盒化”的：
+
+- `h1` 的 `MDXComponent` 映射仅用于 `# hi`，而不用于 `<h1>hi</h1>`
+- **小写**的自定义元素名称将不再被其各自的 `MDXComponent` 组件替换
+
+:::danger 视觉差异
+
+您的 [`MDXComponent` 组件映射](../guides/markdown-features/markdown-features-react.mdx#mdx-component-scope) 可能不再像以前那样应用，您的自定义组件可能不再被使用。
+
+:::
+
+:::tip 如何升级
+
+对于原生的 Markdown 元素，您可以继续使用**小写**：`p`、`h1`、`img`、`a`...
+
+对于任何其他元素，**请使用大写名称**。
+
+```diff title="src/theme/MDXComponents.js"
+ import MDXComponents from '@theme-original/MDXComponents';
+
+ export default {
+   ...MDXComponents,
+   p: (props) => <p {...props} className="my-paragraph"/>
+-  myElement: (props) => <div {...props} className="my-class" />,
++  MyElement: (props) => <div {...props} className="my-class" />,
+ };
+```
+
+:::
+
+#### 意外的额外段落
+
+在 MDX v3 中，现在可以更容易地交错 JSX 和 Markdown，而不需要额外的换行符。在多行上编写内容也可能产生新的预期 `<p>` 标签。
+
+:::danger 视觉差异
+
+看看这个内容在 MDX v1 和 v3 中的渲染方式有何不同。
+
+```md title="example.md"
+<div>一些 **Markdown** 内容</div>
+<div>
+  一些 **Markdown** 内容
+</div>
+```
+
+{/* prettier-ignore */}
+```html title="MDX v1 输出"
+<div>一些 **Markdown** 内容</div>
+<div>一些 **Markdown** 内容</div>
+```
+
+{/* prettier-ignore */}
+```html title="MDX v3 输出"
+<div>一些 <strong>Markdown</strong> 内容</div>
+<div><p>一些 <strong>Markdown</strong> 内容</p></div>
+```
+
+:::
+
+:::tip 如何升级
+
+如果您不想要额外的 `<p>` 标签，请根据具体情况重构内容，以使用单行 JSX 标签。
+
+```diff
+ <figure>
+   <img src="/img/myImage.png" alt="My alt" />
+-  <figcaption>
+-    我的图片标题
+-  </figcaption>
++  <figcaption>我的图片标题</figcaption>
+ </figure>
+```
+
+如果您不打算在那里使用 Markdown 语法，也可以用 `{` 和 `}` 包装此类内容以避免额外的 `<p>` 标签。
+
+```diff
+-<figure>
++{<figure>
+   <img src="/img/myImage.png" alt="My alt" />
+   <figcaption>
+     我的图片标题
+   </figcaption>
+-</figure>
++</figure>}
+```
+
+:::
+
+#### 意外使用指令
+
+Docusaurus v3 现在使用 [Markdown 指令](https://talk.commonmark.org/t/generic-directives-plugins-syntax/444)（通过 [remark-directive](https://github.com/remarkjs/remark-directive) 实现）作为提供提示框支持和其他即将推出的 Docusaurus 功能的通用方式。
+
+```md title="example.md"
+这是一个 :textDirective
+
+::leafDirective
+
+:::containerDirective
+
+容器指令内容
+
+:::
+```
+
+:::danger 视觉变化
+
+指令被解析的目的是为了由其他 Remark 插件处理。未处理的指令将被忽略，并且不会以其原始形式渲染回来。
+
+```md title="example.md"
+AWS re:Invent 会议很棒
+```
+
+由于 `:Invent` 被解析为文本指令，现在将渲染为：
+
+```
+AWS re
+会议很棒
+```
+
+:::
+
+:::tip 如何升级
+
+- 使用 HTML 代码：`&#58;`
+- 在 `:` 后添加一个空格（如果合理的话）：`: text`
+- 转义它：`\:`
+
+:::
+
+#### 不支持的缩进代码块
+
+MDX 不再将缩进的文本转换为代码块。
+
+```md title="example.md"
+    console.log("hello");
+```
+
+:::danger 视觉变化
+
+升级通常不会产生新的 MDX 编译错误，但可能导致内容以意想不到的方式渲染，因为不再有代码块。
+
+:::
+
+:::tip 如何升级
+
+使用常规的代码块语法而不是缩进：
+
+````md title="example.md"
+```js
+console.log('hello');
+```
+````
+
+:::
+
+### 其他 Markdown 不兼容性
+
+#### 以空格或标点符号开头或结尾的强调
+
+新的 MDX 解析器现在严格遵守 CommonMark 规范。CommonMark 规范引入了关于空格和标点符号周围强调的规则，这与不使用空格分割单词的语言（自 v0.14 起）尤其不兼容。
+
+日语和中文受此影响最大，但也有其他一些语言可能受到影响（例如泰语和高棉语），例如当您尝试强调行内代码或链接时。使用空格分割单词的语言受影响要小得多。
+
+以下示例中的 `**`（除了 `` `**` ``）在 Docusaurus 2 中按预期解析，但在 Docusaurus 3 中则不然。
+
+{/* 对于中文翻译者：您可以将以下日语翻译成中文。 */}
+
+{/* prettier-ignore */}
+```md title="example.md"
+**不要用空格结束强调范围。**否则 `**` 将无法按预期工作。
+
+<!-- 日语 -->
+**「。」の後に文を続けると`**`が意図した動作をしません。**また、**[リンク](https://docusaurus.io/)**や**`コード`**のすぐ外側に`**`、そのさらに外側に句読点以外がある場合も同様です。
+```
+
+<details>
+<summary>查看详细条件和如何升级</summary>
+
+如果 `*` 或 `**` 匹配以下任一条件，它将不再作为强调标记的开始：
+
+- 下一个字符是空格（例如 `word* word`）
+- 前一个字符是标点符号，下一个字符是字母（不是空格或标点符号）（例如 `文**（文）`）
+
+相反，如果 `*` 或 `**` 匹配以下任一条件，它将不再作为强调标记的结束：
+
+- 前一个字符是空格（例如 `word *word`）
+- 下一个字符是标点符号，前一个字符是字母（例如 `文。**文`）
+
+“标点符号”包括非 ASCII 字符、括号、引号和一些符号，包括 `%` 和 `@`。更严格地说，其 2 字母 Unicode 类别以 `P` 开头的字符在这里被视为标点符号。
+
+:::tip 如何升级
+
+如果违规的强调标记旁边有空格，请将空格移出强调范围：
+
+```md title="english.md"
+**不要用空格结束强调范围。** 否则 `**` 将无法工作。
+```
+
+如果违规的强调标记被标点符号和字母包围，您可以在不修改内容的情况下修复它：
+
+1.  如果文档是纯 Markdown，则将其转换为 MDX。
+2.  用原始 HTML 标签（`<em>` 或 `<strong>`）替换违规的强调标记：
+
+{/* prettier-ignore */}
+```mdx title="japanese.mdx"
+<strong>「。」の後に文を続けると`**`が意図した動作をしません。</strong>また、<strong>[リンク](https://docusaurus.io/)</strong>や<strong>`コード`</strong>のすぐ外側に`**`、そのさらに外側に句読点以外がある場合も同様です。
+```
+
+虽然不是理想的解决方案，但您也可以在不将文档转换为 MDX 的情况下执行以下任一操作：
+
+- 将最外层的标点符号移出强调标记。
+
+  {/* prettier-ignore */}
+  ```md title="japanese.md"
+  **「。」の後に文を続けると`**`が意図した動作をしません**。また、[**リンク**](https://docusaurus.io/)や・・・
+  ```
+
+- 在违规的 `*` 或 `**` 外面放一个空格。此解决方案不强制您将文档转换为 MDX。
+
+  {/* prettier-ignore */}
+  ```md title="japanese.md"
+  **「。」の後に文を続けると`**`が意図した動作をしません。** また、**[リンク](https://docusaurus.io/)** や **`コード`** のすぐ外側に`**`、そのさらに外側に句読点以外がある場合も同様です。
+  ```
+
+一个非官方的 remark 插件 [remark-cjk-friendly](https://www.npmjs.com/package/remark-cjk-friendly) 可以在大多数情况下修复此问题，而无需像上面那样修改用中文、日文和韩文编写的 Markdown 源文件。
+
+:::
+
+</details>
+
+### MDX 插件
+
+MDX 生态系统中的所有官方包（Unified、Remark、Rehype...）现在都是[**仅限 ES 模块**](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c)，不再支持 [CommonJS](https://nodejs.org/api/modules.html#modules-commonjs-modules)。
+
+实际上，这意味着您不能再执行 `require("remark-plugin")`。
+
+:::tip 如何升级
+
+Docusaurus v3 现在支持[**ES 模块**](https://flaviocopes.com/es-modules/)配置文件。我们建议您将配置文件迁移到 ES 模块，这样可以轻松导入 Remark 插件：
+
+```js title="docusaurus.config.js"
+import remarkPlugin from 'remark-plugin';
+
+export default {
+  title: 'Docusaurus',
+  /* 此处使用 remark 插件的站点配置 */
+};
+```
+
+如果您想继续使用 CommonJS 模块，可以使用动态导入作为解决方法，在 CommonJS 模块内导入 ES 模块。幸运的是，[Docusaurus 配置支持使用异步函数](/docs/configuration#syntax-to-declare-docusaurus-config)来实现这一点。
+
+```js title="docusaurus.config.js"
+module.exports = async function () {
+  const myPlugin = (await import('remark-plugin')).default;
+  return {
+    // 站点配置...
+  };
+};
+```
+
+:::
+
+:::info 对于插件作者
+
+如果您创建了自定义的 Remark 或 Rehype 插件，由于新 AST 的结构方式，您可能需要重构这些插件，或者最终完全重写它们。我们创建了一个[专门的支持讨论](https://github.com/facebook/docusaurus/discussions/9337)来帮助插件作者升级他们的代码。
+
+:::
+
+### 格式化工具
+
+Prettier 是最常见的格式化工具，截至 Docusaurus v3.0.0，它只支持旧的 MDX v1，尚不支持 v3。您可以在代码不兼容的部分前面添加 `{/* prettier-ignore */}`，使其与 Prettier 兼容。
+
+```mdx
+{/* prettier-ignore */}
+<SomeComponent>组件中的一些长文本</SomeComponent>
+```
+
+如果您厌倦了太多的 `{/* prettier-ignore */}` 插入，可以考虑通过在 `.prettierignore` 文件中添加以下内容来禁用 Prettier 对 MDX 的格式化，直到它开始支持 MDX v3：
+
+```txt title=".prettierignore"
+*.mdx
+```
+
+## 其他破坏性变更
+
+除了 MDX v3 升级，以下是 Docusaurus v3 带来的详尽的破坏性变更列表。
+
+### Node.js v18.0
+
+Node.js 16 已[达到生命周期终点](https://nodejs.org/en/blog/announcements/nodejs16-eol)，Docusaurus v3 现在要求 **Node.js >= 18.0**。
+
+:::tip 如何升级
+
+在您的计算机上安装 Node.js 18.0+。
+
+最终，配置您的持续集成、CDN 或主机以使用这个新的 Node.js 版本。
+
+您还可以更新站点的 `package.json` 以防止使用旧的不受支持的版本：
+
+```diff title="package.json"
+ {
+   "engines": {
+-     "node": ">=16.14"
++     "node": ">=18.0"
+   }
+ }
+```
+
+在升级到 Docusaurus v3 之前，将您的 Docusaurus v2 站点升级到 Node.js 18。
+
+:::
+
+### React v18.0+
+
+Docusaurus v3 现在要求 **React >= 18.0**。
+
+React 18 带来了自己的破坏性变更，这些变更应该相对容易处理，具体取决于您为站点创建的自定义 React 代码量。官方主题和插件与 React 18 兼容。
+
+:::info 如何升级
+
+阅读官方的 [React v18.0](https://react.dev/blog/2022/03/29/react-v18) 和[如何升级到 React 18](https://react.dev/blog/2022/03/08/react-18-upgrade-guide)，并查看您自己的 React 代码，以确定哪些组件可能受此升级影响。
+
+我们建议特别关注：
+
+- 有状态组件的自动批处理
+- 控制台中报告的新的 React 水合错误
+
+:::
+
+:::danger React 18 功能的实验性支持
+
+React 18 带来了新功能：
+
+- `<Suspense>`
+- `React.lazy()`
+- `startTransition`
+
+它们在 Docusaurus 中的支持被认为是实验性的。我们将来可能需要调整集成，导致不同的运行时行为。
+
+:::
+
+### Prism-React-Renderer v2.0+
+
+Docusaurus v3 将 [`prism-react-renderer`](https://github.com/FormidableLabs/prism-react-renderer) 升级到 v2.0+。该库用于代码块语法高亮。
+
+:::info 如何升级
+
+这是一个新的主要库版本，包含破坏性变更，我们无法保证严格的向后兼容性。[`prism-react-renderer` v2 发布说明](https://github.com/FormidableLabs/prism-react-renderer/releases/tag/prism-react-renderer%402.0.0)不是很详尽，但对于 Docusaurus 用户来说，有 3 个主要变化需要注意。
+
+应升级依赖项：
+
+```diff title="package.json"
+ {
+   "dependencies": {
+-    "prism-react-renderer": "^1.3.5",
++    "prism-react-renderer": "^2.1.0",
+ }
+```
+
+在 Docusaurus 配置文件中导入主题的 API 已更新：
+
+```diff title="docusaurus.config.js"
+- const lightTheme = require('prism-react-renderer/themes/github');
+- const darkTheme = require('prism-react-renderer/themes/dracula');
++ const {themes} = require('prism-react-renderer');
++ const lightTheme = themes.github;
++ const darkTheme = themes.dracula;
+```
+
+以前，`react-prism-render` v1 [默认包含更多语言](https://github.com/FormidableLabs/prism-react-renderer/blob/v1.3.5/src/vendor/prism/includeLangs.js)。从 v2.0+ 开始，[默认包含的语言更少](https://github.com/FormidableLabs/prism-react-renderer/blob/prism-react-renderer%402.1.0/packages/generate-prism-languages/index.ts#L9)。您可能需要在 Docusaurus 配置中添加额外的语言：
+
+```js title="docusaurus.config.js"
+const siteConfig = {
+  themeConfig: {
+    prism: {
+      // highlight-next-line
+      additionalLanguages: ['bash', 'diff', 'json'],
+    },
+  },
+};
+```
+
+:::
+
+### React-Live v4.0+
+
+对于 `@docusaurus/theme-live-codeblock` 包的用户，Docusaurus v3 将 [`react-live`](https://github.com/FormidableLabs/react-live) 升级到 v4.0+。
+
+:::info 如何升级
+
+理论上，您无需做任何事情，您现有的交互式代码块应该会像以前一样继续工作。
+
+然而，这是一个新的主要库版本，包含破坏性变更，我们无法保证严格的向后兼容性。如果出现问题，请阅读 [v3](https://github.com/FormidableLabs/react-live/releases/tag/v3.0.0) 和 [v4](https://github.com/FormidableLabs/react-live/releases/tag/v4.0.0) 的变更日志。
+
+:::
+
+### remark-emoji v4.0+
+
+Docusaurus v3 将 [`remark-emoji`](https://github.com/rhysd/remark-emoji) 升级到 v4.0+。该库用于在 Markdown 中支持 `:emoji:` 快捷方式。
+
+:::info 如何升级
+
+大多数 Docusaurus 用户无需做任何事情。使用 emoji 短代码的用户应阅读[变更日志](https://github.com/rhysd/remark-emoji/blob/master/CHANGELOG.md)并仔细检查他们的表情符号是否按预期渲染。
+
+> **破坏性变更** 将 [node-emoji](https://www.npmjs.com/package/node-emoji) 从 v1 更新到 v2。此更改引入了对许多新表情符号的支持，并删除了不再在 GitHub 上有效的旧表情符号短代码。
+
+:::
+
+### Mermaid v10.4+
+
+对于 `@docusaurus/theme-mermaid` 包的用户，Docusaurus v3 将 [`mermaid`](https://github.com/mermaid-js/mermaid) 升级到 v10.4+。
+
+:::info 如何升级
+
+理论上，您无需做任何事情，您现有的图表应该会像以前一样继续工作。
+
+然而，这是一个新的主要库版本，包含破坏性变更，我们无法保证严格的向后兼容性。如果出现问题，请阅读 [v10](https://github.com/mermaid-js/mermaid/releases/tag/v10.0.0) 的变更日志。
+
+:::
+
+### TypeScript v5.1+
+
+Docusaurus v3 现在要求 **TypeScript >= 5.1**。
+
+:::info 如何升级
+
+升级您的依赖项以使用 TypeScript 5+
+
+```diff title="package.json"
+ {
+   "devDependencies": {
+-    "typescript": "~4.7.4"
++    "typescript": "~5.2.2"
+   }
+ }
+```
+
+:::
+
+### TypeScript 基础配置
+
+官方的 Docusaurus TypeScript 配置已从外部包 [`@tsconfig/docusaurus`](https://www.npmjs.com/package/@tsconfig/docusaurus) 重新内部化到我们的新 monorepo 包 [`@docusaurus/tsconfig`](https://www.npmjs.com/package/@docusaurus/tsconfig)。
+
+这个新包与所有其他 Docusaurus 核心包一起版本化，并将用于确保 TypeScript 的向后兼容性和主版本升级时的破坏性变更。
+
+:::info 如何升级
+
+将外部 TypeScript 配置包替换为新的官方包
+
+```diff title="package.json"
+ {
+   "devDependencies": {
+-    "@tsconfig/docusaurus": "^1.0.7",
++    "@docusaurus/tsconfig": "3.0.0",
+   }
+ }
+```
+
+在您的 `tsconfig.json` 文件中使用它：
+
+```diff title="tsconfig.json"
+ {
+-  "extends": "@tsconfig/docusaurus/tsconfig.json",
++  "extends": "@docusaurus/tsconfig",
+   "compilerOptions": {
+     "baseUrl": "."
+   }
+ }
+```
+
+:::
+
+### 新的配置加载器
+
+Docusaurus v3 将其内部配置加载库从 [`import-fresh`](https://github.com/sindresorhus/import-fresh) 更改为 [`jiti`](https://github.com/unjs/jiti)。它负责加载 `docusaurus.config.js` 或 `sidebars.js` 等文件，以及 Docusaurus 插件。
+
+:::info 如何升级
+
+理论上，您无需做任何事情，您现有的配置文件应该会像以前一样继续工作。
+
+然而，这是一个主要的依赖项更换，可能会出现细微的行为变化。
+
+:::
+
+### 提示框警告
+
+出于历史原因，我们支持一个未记录的提示框 `:::warning`，它以红色渲染。
+
+:::danger 警告
+
+这是一个 Docusaurus v2 `:::warning` 提示框。
+
+:::
+
+然而，颜色和图标一直都是错误的。Docusaurus v3 重新正式引入了 `:::warning` 提示框，对其进行了文档化，并修复了颜色和图标。
+
+:::warning
+
+这是一个 Docusaurus v3 `:::warning` 提示框。
+
+:::
+
+:::info 如何升级
+
+如果您以前使用过未记录的 `:::warning` 提示框，请确保为每个用法验证黄色现在是否是合适的颜色。如果您想保留红色，请改用 `:::danger`。
+
+Docusaurus v3 还[弃用了 `:::caution`](https://github.com/facebook/docusaurus/pull/9308) 提示框。请将 `:::caution`（黄色）重构为 `:::warning`（黄色）或 `:::danger`（红色）。
+
+如果您想保留标题“caution”，您可能需要将其重构为 `:::warning[caution]`（黄色）。
+
+:::
+
+### 版本化侧边栏
+
+此破坏性变更仅影响在 `v2.0.0-beta.10`（2021 年 12 月）之前对文档进行版本化的 **Docusaurus v2 早期采用者**。
+
+在创建版本 `v1.0.0` 时，侧边栏文件包含一个前缀 `version-v1.0.0/`，[Docusaurus v3 不再支持此](https://github.com/facebook/docusaurus/pull/9310)。
+
+```json title="versioned_sidebars/version-v1.0.0-sidebars.json"
+{
+  "version-v1.0.0/docs": [
+    "version-v1.0.0/introduction",
+    "version-v1.0.0/prerequisites"
+  ]
+}
+```
+
+:::info 如何升级
+
+从您的版本化侧边栏中删除无用的版本化前缀。
+
+```json title="versioned_sidebars/version-v1.0.0-sidebars.json"
+{
+  "docs": ["introduction", "prerequisites"]
+}
+```
+
+:::
+
+### 博客 Feed 限制
+
+`@docusaurus/plugin-content-blog` 现在默认将 RSS feed 限制为最后 20 个条目。对于大型 Docusaurus 博客，这是一个更合理的默认值，以避免 RSS 文件越来越大。
+
+:::info 如何升级
+
+如果您不喜欢这个新的默认行为，可以使用新的 `limit: false` feed 选项恢复到以前的“无限 feed”行为：
+
+```js title="docusaurus.config.js"
+const blogOptions = {
+  feedOptions: {
+    // highlight-next-line
+    limit: false,
+  },
+};
+```
+
+:::
+
+### 文档主题重构
+
+对于 swizzle 了与文档相关的主题组件（如 `@theme/DocPage`）的用户，这些组件已进行了重大重构，以便更容易自定义。
+
+技术上，**这不是一个破坏性变更**，因为这些组件被**标记为不安全 swizzle**，但许多 Docusaurus 站点弹出了与文档相关的组件，并且会想知道他们的自定义可能会破坏 Docusaurus。
+
+:::info 如何升级
+
+删除所有 swizzle 的组件，重新 swizzle 它们，并在新更新的组件之上重新应用您的自定义。
+
+或者，您可以查看[拉取请求说明](https://github.com/facebook/docusaurus/pull/7966)以了解新的主题组件树结构，并最终尝试手动修补您 swizzle 的组件。
+
+:::
+
+## 可选更改
+
+一些更改不是强制性的，但了解它们对于充分利用 Docusaurus v3 仍然很有用。
+
+### 自动 JSX 运行时
+
+Docusaurus v3 现在使用 React 18 的[“自动”JSX 运行时](https://legacy.reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html)。
+
+不再需要在不使用任何 React API 的 JSX 文件中导入 React。
+
+```diff title="src/components/MyComponent.js"
+- import React from 'react';
+
+  export default function MyComponent() {
+    return <div>Hello</div>;
+  }
+```
+
+### ESM 和 TypeScript 配置
+
+Docusaurus v3 支持 ESM 和 TypeScript 配置文件，采用这些新选项可能是一个好主意。
+
+```js title="docusaurus.config.js"
+export default {
+  title: 'Docusaurus',
+  url: 'https://docusaurus.io',
+  // 您的站点配置...
+};
+```
+
+```ts title="docusaurus.config.ts"
+import type {Config} from '@docusaurus/types';
+import type * as Preset from '@docusaurus/preset-classic';
+
+const config: Config = {
+  title: 'My Site',
+  favicon: 'img/favicon.ico',
+  presets: [
+    [
+      'classic',
+      {
+        /* 您的预设配置在此 */
+      } satisfies Preset.Options,
+    ],
+  ],
+
+  themeConfig: {
+    /* 您的主题配置在此 */
+  } satisfies Preset.ThemeConfig,
+};
+
+export default config;
+```
+
+### 使用 `.mdx` 扩展名
+
+我们建议在 Markdown 文件中使用 JSX、`import` 或 `export`（即 MDX 功能）时使用 `.mdx` 扩展名。这在语义上更正确，并提高了与外部工具（IDE、格式化工具、linter 等）的兼容性。
+
+在 Docusaurus 的未来版本中，`.md` 文件将被解析为标准的 [CommonMark](https://commonmark.org/)，它不支持这些功能。在 Docusaurus v3 中，`.md` 文件继续作为 MDX 文件编译，但可以[选择加入 CommonMark](https://github.com/facebook/docusaurus/issues/3018)。
+
+### 升级数学包
+
+如果您使用 Docusaurus 渲染[数学方程式](../guides/markdown-features/markdown-features-math-equations.mdx)，您应该升级 MDX 插件。
+
+确保为 Docusaurus v3（使用 MDX v3）使用 `remark-math 6` 和 `rehype-katex 7`。我们不能保证其他版本会起作用。
+
+```diff package.json
+{
+-  "remark-math": "^3.0.0",
++  "remark-math": "^6.0.0",
+-  "rehype-katex": "^5.0.0"
++  "rehype-katex": "^7.0.0"
+}
+```
+
+在 Docusaurus v3 中，`hast-util-is-element` 不再是必需的。如果您已安装它并且在其他地方不使用它，您只需运行 `npm uninstall hast-util-is-element` 即可将其删除。
+
+### 关闭 MDX v1 兼容性
+
+Docusaurus v3 带有[MDX v1 兼容性选项](../api/docusaurus.config.js.mdx#markdown)，默认情况下是开启的。
+
+```js title="docusaurus.config.js"
+export default {
+  markdown: {
+    mdx1Compat: {
+      comments: true,
+      admonitions: true,
+      headingIds: true,
+    },
+  },
+};
+```
+
+#### `comments` 选项
+
+此选项允许在 MDX 中使用 HTML 注释，而 HTML 注释已不再正式支持。
+
+对于 MDX 文件，我们建议逐步使用 MDX `{/* 注释 */}` 而不是 HTML `<!-- 注释 -->`，然后关闭此兼容性选项。
+
+:::info 博客截断标记
+
+默认的博客截断标记现在支持 `<!-- truncate -->` 和 `{/* truncate */}`。
+
+:::
+
+#### `admonitions` 选项
+
+此选项允许使用 Docusaurus v2 的[提示框标题](../guides/markdown-features/markdown-features-admonitions.mdx#specifying-title)语法：
+
+```md
+:::note 您的标题
+
+内容
+
+:::
+```
+
+Docusaurus 现在使用 [Markdown 指令](https://talk.commonmark.org/t/generic-directives-plugins-syntax/444)（通过 [remark-directive](https://github.com/remarkjs/remark-directive) 实现）来实现提示框，提供指令标签的语法需要方括号：
+
+```md
+:::note[您的标题]
+
+内容
+
+:::
+```
+
+我们建议逐步使用新的 Markdown 指令标签语法，然后关闭此兼容性选项。
+
+#### `headingIds` 选项
+
+此选项允许使用 Docusaurus v2 的[显式标题 id](../guides/markdown-features/markdown-features-toc.mdx#heading-ids)语法：
+
+```mdx-code-block
+<Code language="md">{'### Hello World \u007B#my-explicit-id}\n'}</Code>
+```
+
+此语法现在是无效的 MDX，需要转义 `{` 字符：`\{#my-explicit-id}`。
+
+我们建议暂时保持此兼容性选项开启，直到我们提供与较新版本的 MDX 兼容的新语法。
+
+## 故障排除
+
+如果出现任何升级问题，首先要尝试的是：
+
+- 确保您的所有文档都在 [MDX 演练场](https://mdxjs.com/playground/)中编译，或使用 [`npx docusaurus-mdx-checker`](https://github.com/slorber/docusaurus-mdx-checker)
+- 删除 `node_modules` 和 `package-lock.json`，然后再次运行 `npm install`
+- 运行 `docusaurus clear` 以清除缓存
+- 删除可能不支持 Docusaurus v3 的第三方插件
+- 删除所有您 swizzle 的组件
+
+尝试过这些之后，您可以通过以下支持渠道寻求帮助：
+
+- [Docusaurus v3 - 升级支持](https://github.com/facebook/docusaurus/discussions/9336)
+- [Docusaurus v3 - Discord 频道 #migration-v2-to-v3](https://discord.com/channels/398180168688074762/1154771869094912090)
+- [MDX v3 - 升级支持](https://github.com/facebook/docusaurus/discussions/9053)
+- [MDX v3 - Remark/Rehype 插件支持](https://github.com/facebook/docusaurus/discussions/9337)
+- [MDX v3 - Discord 频道 #migration-mdx-v3](https://discord.com/channels/398180168688074762/1116724556976111616)
+
+请考虑**我们的时间是宝贵的**。为确保您的支持请求不被忽略，我们恳请您：
+
+- 提供一个我们可以轻松运行的**最小**复现，最好是用 [docusaurus.new](https://docusaurus.new) 创建的
+- 提供一个显示问题实际情况的实时部署 URL（如果您的站点可以构建）
+- 清楚地解释问题，远不止一个模棱两可的“它不工作”
+- 尽可能多地包含相关材料：代码片段、仓库 URL、git 分支 URL、完整的堆栈跟踪、屏幕截图和视频
+- 清晰、简洁地提出您的请求，向我们展示您已经努力帮助我们帮助您
+
+或者，您可以寻找付费的 [Docusaurus 服务提供商](https://github.com/facebook/docusaurus/discussions/9281)来为您执行此升级。如果您的站点是开源的，您也可以向我们的社区寻求[免费、善意的帮助](https://github.com/facebook/docusaurus/discussions/9283)。
+```

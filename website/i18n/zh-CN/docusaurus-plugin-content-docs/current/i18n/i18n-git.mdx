@@ -1,0 +1,182 @@
+---
+id: git
+slug: /i18n/git
+---
+
+# i18n - 使用 Git
+
+一种**可能的翻译策略**是使用 Git（或任何其他 [VCS](https://en.wikipedia.org/wiki/Version_control)）对**翻译文件进行版本控制**。
+
+## 权衡 {#tradeoffs}
+
+这种策略有以下优点：
+
+- **易于上手**：只需将 `i18n` 文件夹提交到 Git
+- **对开发者友好**：Git、GitHub 和拉取请求是主流的开发者工具
+- **免费**（或没有额外成本，假设您已经在使用 Git）
+- **低摩擦**：不需要注册外部工具
+- **有成就感**：贡献者乐于拥有一个漂亮的贡献历史
+
+使用 Git 也存在一些缺点：
+
+- **对非开发者不友好**：他们不熟悉 Git 和拉取请求
+- **对专业翻译人员不友好**：他们习惯于 SaaS 翻译软件和高级功能
+- **难以维护**：您必须保持翻译文件与未翻译文件**同步**
+
+:::note
+
+一些**大型技术项目**（React、Vue.js、MDN、TypeScript、Nuxt.js 等）使用 Git 进行翻译。
+
+有关我们研究这些系统的笔记和链接，请参阅 [Docusaurus i18n RFC](https://github.com/facebook/docusaurus/issues/3317)。
+
+:::
+
+## 初始化 {#initialization}
+
+这是一个使用 Git 将一个新初始化的英文 Docusaurus 网站翻译成法语的演练，并假设您已经遵循了 [i18n 教程](./i18n-tutorial.mdx)。
+
+### 准备 Docusaurus 站点 {#prepare-the-docusaurus-site}
+
+初始化一个新的 Docusaurus 站点：
+
+```bash
+npx create-docusaurus@latest website classic
+```
+
+为法语添加站点配置：
+
+```js title="docusaurus.config.js"
+export default {
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en', 'fr'],
+  },
+  themeConfig: {
+    navbar: {
+      items: [
+        // ...
+        {
+          type: 'localeDropdown',
+          position: 'left',
+        },
+        // ...
+      ],
+    },
+  },
+  // ...
+};
+```
+
+翻译主页：
+
+```jsx title="src/pages/index.js"
+import React from 'react';
+import Translate from '@docusaurus/Translate';
+import Layout from '@theme/Layout';
+
+export default function Home() {
+  return (
+    <Layout>
+      <h1 style={{margin: 20}}>
+        <Translate description="The homepage main heading">
+          Welcome to my Docusaurus translated site!
+        </Translate>
+      </h1>
+    </Layout>
+  );
+}
+```
+
+### 初始化 `i18n` 文件夹 {#initialize-the-i18n-folder}
+
+使用 [write-translations](../cli.mdx#docusaurus-write-translations-sitedir) CLI 命令为法语区域设置初始化 JSON 翻译文件：
+
+```bash npm2yarn
+npm run write-translations -- --locale fr
+
+  1 translations written at i18n/fr/code.json
+ 11 translations written at i18n/fr/docusaurus-theme-classic/footer.json
+  4 translations written at i18n/fr/docusaurus-theme-classic/navbar.json
+  3 translations written at i18n/fr/docusaurus-plugin-content-docs/current.json
+```
+
+:::tip
+
+使用 `--messagePrefix '(fr) '` 选项可以使未翻译的字符串突出显示。
+
+`Hello` 将显示为 `(fr) Hello`，从而清楚地表明缺少翻译。
+
+:::
+
+将您未翻译的 Markdown 文件复制到法语文件夹：
+
+```bash
+mkdir -p i18n/fr/docusaurus-plugin-content-docs/current
+cp -r docs/** i18n/fr/docusaurus-plugin-content-docs/current
+
+mkdir -p i18n/fr/docusaurus-plugin-content-blog
+cp -r blog/** i18n/fr/docusaurus-plugin-content-blog
+
+mkdir -p i18n/fr/docusaurus-plugin-content-pages
+cp -r src/pages/**.md i18n/fr/docusaurus-plugin-content-pages
+cp -r src/pages/**.mdx i18n/fr/docusaurus-plugin-content-pages
+```
+
+将所有这些文件添加到 Git。
+
+### 翻译文件 {#translate-the-files}
+
+翻译 `i18n/fr` 中的 Markdown 和 JSON 文件，并提交翻译。
+
+现在您应该能够以法语启动您的站点并看到翻译：
+
+```bash npm2yarn
+npm run start -- --locale fr
+```
+
+您也可以在本地或 CI 上构建站点：
+
+```bash npm2yarn
+npm run build
+# or
+npm run build -- --locale fr
+```
+
+### 重复 {#repeat}
+
+为您需要支持的每个区域设置重复相同的过程。
+
+## 维护 {#maintenance}
+
+保持翻译文件与原始文件**一致**可能具有挑战性，特别是对于 Markdown 文档。
+
+### Markdown 翻译 {#markdown-translations}
+
+当编辑未翻译的 Markdown 文档时，**您有责任维护相应的翻译文件**，不幸的是，我们没有很好的方法来帮助您做到这一点。
+
+为了保持您的翻译站点一致，当 `website/docs/doc1.md` 文档被编辑时，您需要**将这些编辑反向移植**到 `i18n/fr/docusaurus-plugin-content-docs/current/doc1.md`。
+
+### JSON 翻译 {#json-translations}
+
+为了帮助您维护 JSON 翻译文件，可以再次运行 [write-translations](../cli.mdx#docusaurus-write-translations-sitedir) CLI 命令：
+
+```bash npm2yarn
+npm run write-translations -- --locale fr
+```
+
+新的翻译将被追加，现有的翻译不会被覆盖。
+
+:::tip
+
+使用 `--override` 选项重置您的翻译。
+
+:::
+
+### 本地化编辑 URL {#localize-edit-urls}
+
+当用户在 `/fr/doc1` 页面上浏览时，编辑按钮默认会链接到未本地化的文档 `website/docs/doc1.md`。
+
+您的翻译在 Git 上，您可以使用文档和博客插件的 `editLocalizedFiles: true` 选项。
+
+编辑按钮将链接到本地化的文档 `i18n/fr/docusaurus-plugin-content-docs/current/doc1.md`。
+```

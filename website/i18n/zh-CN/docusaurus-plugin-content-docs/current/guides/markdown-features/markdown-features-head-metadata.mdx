@@ -1,0 +1,82 @@
+---
+id: head-metadata
+description: 通过 MDX 声明特定页面的 head 元数据
+slug: /markdown-features/head-metadata
+---
+
+# Head 元数据
+
+## 自定义 head 元数据 {#customizing-head-metadata}
+
+Docusaurus 会自动在 `<html>`、`<head>` 和 `<body>` 中为您设置有用的页面元数据。可以在 Markdown 文件中使用 `<head>` 标签来添加额外的元数据（或覆盖现有的元数据）：
+
+```md title="markdown-features-head-metadata.mdx"
+---
+id: head-metadata
+title: Head Metadata
+---
+
+<!-- highlight-start -->
+<head>
+  <html className="some-extra-html-class" />
+  <body className="other-extra-body-class" />
+  <title>Head Metadata customized title!</title>
+  <meta charSet="utf-8" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="canonical" href="https://docusaurus.io/docs/markdown-features/head-metadata" />
+</head>
+<!-- highlight-end -->
+
+# Head Metadata
+
+My text
+```
+
+```mdx-code-block
+<head>
+  <html className="some-extra-html-class" />
+  <body className="other-extra-body-class" />
+  <title>Head Metadata customized title!</title>
+  <meta charSet="utf-8" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="canonical" href="https://docusaurus.io/docs/markdown-features/head-metadata" />
+</head>
+```
+
+这个 `<head>` 声明已作为演示添加到了当前的 Markdown 文档中。打开您的浏览器开发者工具，检查此页面的元数据受到了怎样的影响。
+
+:::note
+
+此功能构建于 Docusaurus [`<Head>`](./../../docusaurus-core.mdx#head) 组件之上。请参阅 [react-helmet](https://github.com/nfl/react-helmet) 获取详尽的文档。
+
+:::
+
+:::tip 对于常规的 SEO，你不需要这个
+
+内容插件（例如文档和博客）提供了像 `description`、`keywords` 和 `image` 这样的 front matter 选项，它们会自动应用于 `description` 和 `og:description`，而使用 `<head>` 标签时，您将不得不手动声明两个元数据标签。
+
+:::
+
+## Markdown 页面描述 {#markdown-page-description}
+
+Markdown 页面的描述元数据可能在 head 元数据之外的更多地方被使用。例如，文档插件的[生成的分类索引](../docs/sidebar/items.mdx#generated-index-page)使用描述元数据来生成文档卡片。
+
+默认情况下，描述是第一个有内容意义的行，并会经过一些处理以转换为纯文本。例如，以下文件……
+
+```md
+# 标题
+
+主要内容……可能包含一些[链接](./file.mdx)或**强调**。
+```
+
+……将具有默认描述“主要内容……可能包含一些链接或强调”。然而，**它的设计并非旨在完全功能化**。当它无法生成合理的描述时，您可以通过 front matter 显式提供一个：
+
+```md
+---
+description: 此描述将覆盖默认值。
+---
+
+# 标题
+
+主要内容……可能包含一些[链接](./file.mdx)或**强调**。
+```

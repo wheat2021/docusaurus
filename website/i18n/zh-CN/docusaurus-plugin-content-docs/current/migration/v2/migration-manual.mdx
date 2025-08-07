@@ -1,0 +1,635 @@
+---
+slug: /migration/v2/manual
+toc_max_heading_level: 4
+---
+
+# 手动迁移
+
+在[自动迁移过程](./migration-automated.mdx)之后，应运行此手动迁移过程，以完成缺失的部分，或调试迁移 CLI 输出中的问题。
+
+## 项目设置 {#project-setup}
+
+### `package.json` {#packagejson}
+
+#### 作用域包名 {#scoped-package-names}
+
+在 Docusaurus 2 中，我们使用作用域包名：
+
+- `docusaurus` → `@docusaurus/core`
+
+这为 Docusaurus 的官方包和社区维护的包提供了清晰的区别。换句话说，所有 Docusaurus 的官方包都在 `@docusaurus/` 命名空间下。
+
+同时，Docusaurus 1 提供的默认文档站点功能现在由 `@docusaurus/preset-classic` 提供。因此，我们也需要添加这个依赖：
+
+```diff title="package.json"
+{
+  dependencies: {
+-   "docusaurus": "^1.x.x",
++   "@docusaurus/core": "^2.0.0-beta.0",
++   "@docusaurus/preset-classic": "^2.0.0-beta.0",
+  }
+}
+```
+
+:::tip
+
+请使用最新的 Docusaurus 2 版本，您可以在[这里](https://www.npmjs.com/package/@docusaurus/core)（使用 `latest` 标签）查看。
+
+:::
+
+#### CLI 命令 {#cli-commands}
+
+同时，CLI 命令被重命名为 `docusaurus <command>`（而不是 `docusaurus-command`）。
+
+您的 `package.json` 的 `"scripts"` 部分应更新如下：
+
+```json {3-6} title="package.json"
+{
+  "scripts": {
+    "start": "docusaurus start",
+    "build": "docusaurus build",
+    "swizzle": "docusaurus swizzle",
+    "deploy": "docusaurus deploy"
+    // ...
+  }
+}
+```
+
+一个典型的 Docusaurus 2 `package.json` 可能如下所示：
+
+```json title="package.json"
+{
+  "scripts": {
+    "docusaurus": "docusaurus",
+    "start": "docusaurus start",
+    "build": "docusaurus build",
+    "swizzle": "docusaurus swizzle",
+    "deploy": "docusaurus deploy",
+    "serve": "docusaurus serve",
+    "clear": "docusaurus clear"
+  },
+  "dependencies": {
+    "@docusaurus/core": "^2.0.0-beta.0",
+    "@docusaurus/preset-classic": "^2.0.0-beta.0",
+    "clsx": "^1.1.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
+  "browserslist": {
+    "production": [">0.5%", "not dead", "not op_mini all"],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
+```
+
+### 更新对 `build` 目录的引用 {#update-references-to-the-build-directory}
+
+在 Docusaurus 1 中，所有构建产物都位于 `website/build/<PROJECT_NAME>` 内。
+
+在 Docusaurus 2 中，它现在被移动到 `website/build`。请确保您更新了部署配置，以从正确的 `build` 目录读取生成的文件。
+
+如果您部署到 GitHub Pages，请确保运行 `yarn deploy` 而不是 `yarn publish-gh-pages` 脚本。
+
+### `.gitignore` {#gitignore}
+
+您 `website` 中的 `.gitignore` 应包含：
+
+```bash title=".gitignore"
+# 依赖
+/node_modules
+
+# 生产
+/build
+
+# 生成的文件
+.docusaurus
+.cache-loader
+
+# 其他
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+```
+
+### `README` {#readme}
+
+D1 网站可能有一个现有的 README 文件。您可以修改它以反映 D2 的更改，或复制默认的 [Docusaurus v2 README](https://github.com/facebook/docusaurus/blob/main/packages/create-docusaurus/templates/shared/README.md)。
+
+## 站点配置 {#site-configurations}
+
+### `docusaurus.config.js` {#docusaurusconfigjs}
+
+将 `siteConfig.js` 重命名为 `docusaurus.config.js`。
+
+在 Docusaurus 2 中，我们将每个功能（博客、文档、页面）拆分为插件以实现模块化。预设是插件的捆绑包，为了向后兼容，我们构建了一个 `@docusaurus/preset-classic` 预设，它捆绑了 Docusaurus 1 中存在的大部分基本插件。
+
+将以下预设配置添加到您的 `docusaurus.config.js`。
+
+```js title="docusaurus.config.js"
+module.exports = {
+  // ...
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        docs: {
+          // 相对于 website 目录的文档文件夹路径。
+          path: '../docs',
+          // 相对于 website 目录的侧边栏文件。
+          sidebarPath: require.resolve('./sidebars.json'),
+        },
+        // ...
+      },
+    ],
+  ],
+};
+```
+
+我们建议将 `docs` 文件夹移动到 `website` 文件夹内，这也是 v2 中的默认目录结构。[Vercel](https://vercel.com) 支持[开箱即用的 Docusaurus 项目部署](https://github.com/vercel/vercel/tree/main/examples/docusaurus)，如果 `docs` 目录在 `website` 内。通常，将文档放在网站内部也更好，这样文档和网站的其余代码就可以共同位于一个 `website` 目录中。
+
+如果您正在迁移您的 Docusaurus v1 网站，并且有待处理的文档拉取请求，您可以暂时将 `/docs` 文件夹保留在其原始位置，以避免产生冲突。
+
+有关 `siteConfig.js` 中每个字段的迁移，请参阅下面的迁移指南。
+
+### 更新的字段 {#updated-fields}
+
+#### `baseUrl`, `tagline`, `title`, `url`, `favicon`, `organizationName`, `projectName`, `githubHost`, `scripts`, `stylesheets` {#baseurl-tagline-title-url-favicon-organizationname-projectname-githubhost-scripts-stylesheets}
+
+无需操作，这些配置字段未被修改。
+
+#### `colors` {#colors}
+
+已弃用。我们为 Docusaurus 2 编写了一个名为 [Infima](https://infima.dev/) 的自定义 CSS 框架，它使用 CSS 变量进行主题化。文档尚未完全准备好，我们将在准备好后更新这里。要覆盖 Infima 的 CSS 变量，请创建您自己的 CSS 文件（例如 `./src/css/custom.css`）并通过将其作为选项传递给 `@docusaurus/preset-classic` 来全局导入它：
+
+```js {7-9} title="docusaurus.config.js"
+module.exports = {
+  // ...
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        theme: {
+          customCss: [require.resolve('./src/css/custom.css')],
+        },
+      },
+    ],
+  ],
+};
+```
+
+Infima 为每种颜色使用 7 种色调。
+
+```css title="/src/css/custom.css"
+/**
+ * 您可以在此处覆盖默认的 Infima 变量。
+ * 注意：这不是 --ifm- 变量的完整列表。
+ */
+:root {
+  --ifm-color-primary: #25c2a0;
+  --ifm-color-primary-dark: rgb(33, 175, 144);
+  --ifm-color-primary-darker: rgb(31, 165, 136);
+  --ifm-color-primary-darkest: rgb(26, 136, 112);
+  --ifm-color-primary-light: rgb(70, 203, 174);
+  --ifm-color-primary-lighter: rgb(102, 212, 189);
+  --ifm-color-primary-lightest: rgb(146, 224, 208);
+}
+```
+
+我们建议使用 [ColorBox](https://www.colorbox.io/) 来为您的主色找到不同的色调。
+
+或者，使用以下工具为您的网站生成不同的色调，并将变量复制到 `src/css/custom.css` 中。
+
+import ColorGenerator from '@site/src/components/ColorGenerator';
+
+<ColorGenerator />
+
+#### `footerIcon`, `copyright`, `ogImage`, `twitterImage`, `docsSideNavCollapsible` {#footericon-copyright-ogimage-twitterimage-docssidenavcollapsible}
+
+网站元信息，如资源、SEO、版权信息现在由主题处理。要自定义它们，请使用 `docusaurus.config.js` 中的 `themeConfig` 字段：
+
+```js title="docusaurus.config.js"
+module.exports = {
+  // ...
+  themeConfig: {
+    footer: {
+      logo: {
+        alt: 'Meta Open Source Logo',
+        src: '/img/meta_oss_logo.png',
+        href: 'https://opensource.facebook.com/',
+      },
+      copyright: `Copyright © ${new Date().getFullYear()} Facebook, Inc.`, // 你也可以在这里放自己的 HTML。
+    },
+    image: 'img/docusaurus.png',
+    // ...
+  },
+};
+```
+
+#### `headerIcon`, `headerLinks` {#headericon-headerlinks}
+
+在 Docusaurus 1 中，页头图标和页头链接是 `siteConfig` 中的根字段：
+
+```js title="siteConfig.js"
+headerIcon: 'img/docusaurus.svg',
+headerLinks: [
+  { doc: "doc1", label: "Getting Started" },
+  { page: "help", label: "Help" },
+  { href: "https://github.com/", label: "GitHub" },
+  { blog: true, label: "Blog" },
+],
+```
+
+现在，这两个字段都由主题处理：
+
+```js {6-19} title="docusaurus.config.js"
+module.exports = {
+  // ...
+  themeConfig: {
+    navbar: {
+      title: 'Docusaurus',
+      logo: {
+        alt: 'Docusaurus Logo',
+        src: 'img/docusaurus.svg',
+      },
+      items: [
+        {to: 'docs/doc1', label: 'Getting Started', position: 'left'},
+        {to: 'help', label: 'Help', position: 'left'},
+        {
+          href: 'https://github.com/',
+          label: 'GitHub',
+          position: 'right',
+        },
+        {to: 'blog', label: 'Blog', position: 'left'},
+      ],
+    },
+    // ...
+  },
+};
+```
+
+#### `algolia` {#algolia}
+
+```js {4-8} title="docusaurus.config.js"
+module.exports = {
+  // ...
+  themeConfig: {
+    algolia: {
+      apiKey: '47ecd3b21be71c5822571b9f59e52544',
+      indexName: 'docusaurus-2',
+      algoliaOptions: { //... },
+    },
+    // ...
+  },
+};
+```
+
+:::warning
+
+您的 Algolia DocSearch v1 配置（在此处找到：[here](https://github.com/algolia/docsearch-configs/blob/master/configs)）应为 Docusaurus v2 更新（[示例](https://github.com/algolia/docsearch-configs/tree/master/configs/docusaurus-2.json)）。
+
+您可以联系 DocSearch 团队（@shortcuts, @s-pace）寻求支持。他们可以为您更新并触发您网站的重新爬取以恢复搜索（否则您将需要等待最多 24 小时才能进行下一次计划的爬取）。
+
+:::
+
+#### `blogSidebarCount` {#blogsidebarcount}
+
+已弃用。请将其作为博客选项传递给 `@docusaurus/preset-classic`：
+
+```js {8} title="docusaurus.config.js"
+module.exports = {
+  // ...
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        blog: {
+          postsPerPage: 10,
+        },
+        // ...
+      },
+    ],
+  ],
+};
+```
+
+#### `cname` {#cname}
+
+已弃用。请在您的 `static` 文件夹中创建一个 `CNAME` 文件，其中包含您的自定义域名。`static` 文件夹中的文件将在执行构建命令期间复制到 `build` 文件夹的根目录。
+
+#### `customDocsPath`, `docsUrl`, `editUrl`, `enableUpdateBy`, `enableUpdateTime` {#customdocspath-docsurl-editurl-enableupdateby-enableupdatetime}
+
+**破坏性变更**：`editUrl` 应指向（网站）Docusaurus 项目，而不是 `docs` 目录。
+
+已弃用。请将其作为选项传递给 `@docusaurus/preset-classic` 的 docs：
+
+```js {8-20} title="docusaurus.config.js"
+module.exports = {
+  // ...
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        docs: {
+          // 相当于 `customDocsPath`。
+          path: 'docs',
+          // 相当于 `editUrl`，但应指向 `website` 目录而不是 `website/docs`。
+          editUrl: 'https://github.com/facebook/docusaurus/edit/main/website',
+          // 相当于 `docsUrl`。
+          routeBasePath: 'docs',
+          // 传递给 MDX 的 Remark 和 Rehype 插件。替换 `markdownOptions` 和 `markdownPlugins`。
+          remarkPlugins: [],
+          rehypePlugins: [],
+          // 相当于 `enableUpdateBy`。
+          showLastUpdateAuthor: true,
+          // 相当于 `enableUpdateTime`。
+          showLastUpdateTime: true,
+        },
+        // ...
+      },
+    ],
+  ],
+};
+```
+
+#### `gaTrackingId` {#gatrackingid}
+
+```js title="docusaurus.config.js"
+module.exports = {
+  // ...
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        // ...
+        // highlight-start
+        googleAnalytics: {
+          trackingID: 'UA-141789564-1',
+        },
+        // highlight-end
+      },
+    ],
+  ],
+};
+```
+
+#### `gaGtag` {#gagtag}
+
+```js title="docusaurus.config.js"
+module.exports = {
+  // ...
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        // ...
+        // highlight-start
+        gtag: {
+          trackingID: 'UA-141789564-1',
+        },
+        // highlight-end
+      },
+    ],
+  ],
+};
+```
+
+### 移除的字段 {#removed-fields}
+
+以下字段均已弃用，您可以从配置文件中删除。
+
+- `blogSidebarTitle`
+- `cleanUrl` - 现在默认使用 Clean URL。
+- `defaultVersionShown` - 版本控制尚未移植。如果您正在使用版本控制，您将无法迁移到 Docusaurus 2。敬请期待。
+- `disableHeaderTitle`
+- `disableTitleTagline`
+- `docsSideNavCollapsible` 在 `docsPluginOptions.sidebarCollapsible` 中可用，并且现在默认开启。
+- `facebookAppId`
+- `facebookComments`
+- `facebookPixelId`
+- `fonts`
+- `highlight` - 我们现在使用 [Prism](https://prismjs.com/) 而不是 [highlight.js](https://highlightjs.org/)。
+- `markdownOptions` - 我们在 v2 中使用 MDX 而不是 Remarkable。您的 Markdown 选项必须转换为 Remark/Rehype 插件。
+- `markdownPlugins` - 我们在 v2 中使用 MDX 而不是 Remarkable。您的 Markdown 插件必须转换为 Remark/Rehype 插件。
+- `manifest`
+- `onPageNav` - 现在默认开启。
+- `separateCss` - 可以像上面提到的 `custom.css` 一样导入。
+- `scrollToTop`
+- `scrollToTopOptions`
+- `translationRecruitingLink`
+- `twitter`
+- `twitterUsername`
+- `useEnglishUrl`
+- `users`
+- `usePrism` - 我们现在使用 [Prism](https://prismjs.com/) 而不是 [highlight.js](https://highlightjs.org/)。
+- `wrapPagesHTML`
+
+我们打算在未来将许多已弃用的配置字段实现为插件。欢迎提供帮助！
+
+## Urls {#urls}
+
+在 v1 中，所有页面都可以带或不带 `.html` 扩展名访问。
+
+例如，这两个页面都存在：
+
+- [`https://v1.docusaurus.io/docs/en/installation`](https://v1.docusaurus.io/docs/en/installation)
+- [`https://v1.docusaurus.io/docs/en/installation.html`](https://v1.docusaurus.io/docs/en/installation.html)
+
+如果 [`cleanUrl`](https://v1.docusaurus.io/docs/en/site-config#cleanurl-boolean) 是：
+
+- `true`：链接将指向 `/installation`
+- `false`：链接将指向 `/installation.html`
+
+在 v2 中，默认情况下，规范页面是 `/installation`，而不是 `/installation.html`。
+
+如果您在 v1 中有 `cleanUrl: false`，那么可能有人发布了指向 `/installation.html` 的链接。
+
+出于 SEO 原因，并避免破坏链接，您应该在您的托管提供商上配置服务器端重定向规则。
+
+作为一种应急方案，您可以使用 [@docusaurus/plugin-client-redirects](../../api/plugins/plugin-client-redirects.mdx) 从 `/installation.html` 创建客户端重定向到 `/installation`。
+
+```js
+module.exports = {
+  plugins: [
+    [
+      '@docusaurus/plugin-client-redirects',
+      {
+        fromExtensions: ['html'],
+      },
+    ],
+  ],
+};
+```
+
+如果您想保留 `.html` 扩展名作为页面的规范 URL，文档可以声明一个 `slug: installation.html` front matter。
+
+## 组件 {#components}
+
+### 侧边栏 {#sidebar}
+
+在以前的版本中，不允许嵌套侧边栏类别，侧边栏类别只能包含文档 ID。然而，v2 允许无限嵌套的侧边栏，并且我们有许多除文档之外的[侧边栏项目类型](../../guides/docs/sidebar/items.mdx)。
+
+如果您的侧边栏包含类别类型，您将需要迁移它。将 `subcategory` 重命名为 `category`，将 `ids` 重命名为 `items`。
+
+```diff title="sidebars.json"
+{
+- type: 'subcategory',
++ type: 'category',
+  label: 'My Example Subcategory',
++ items: ['doc1'],
+- ids: ['doc1']
+},
+```
+
+### 页脚 {#footer}
+
+不再需要 `website/core/Footer.js`。如果您想修改 Docusaurus 提供的默认页脚，请[swizzle](../../swizzling.mdx) 它：
+
+```bash npm2yarn
+npm run swizzle @docusaurus/theme-classic Footer
+```
+
+这将把主题当前使用的 `<Footer />` 组件复制到您站点根目录下的 `src/theme/Footer` 目录中，然后您可以编辑此组件进行自定义。
+
+不要仅仅为了在左侧添加徽标而 swizzle 页脚。徽标在 v2 中被有意移除并移至底部。只需在 `docusaurus.config.js` 中使用 `themeConfig.footer` 配置页脚：
+
+```js
+module.exports = {
+  themeConfig: {
+    footer: {
+      logo: {
+        alt: 'Meta Open Source Logo',
+        src: '/img/meta_oss_logo.png',
+        href: 'https://opensource.facebook.com',
+      },
+    },
+  },
+};
+```
+
+### 页面 {#pages}
+
+请参阅[创建页面](guides/creating-pages.mdx)以了解 Docusaurus 2 页面的工作方式。阅读后，请注意您必须将 v1 中的 `pages/en` 文件移动到 `src/pages`。
+
+在 Docusaurus 1 中，页面接收 `siteConfig` 对象作为 props。
+
+在 Docusaurus 2 中，请从 `useDocusaurusContext` 获取 `siteConfig` 对象。
+
+在 v2 中，您必须在每个页面周围应用主题布局。Layout 组件接收元数据 props。
+
+`CompLibrary` 在 v2 中已弃用，因此您必须编写自己的 React 组件或使用 Infima 样式（文档即将推出，对此我们深表歉意！在此期间，请检查 V2 网站或查看 https://infima.dev/ 以了解可用的样式）。
+
+您可以将 CommonJS 迁移到 ES6 导入/导出。
+
+这是一个典型的 Docusaurus v2 页面：
+
+```jsx
+import React from 'react';
+import Link from '@docusaurus/Link';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import Layout from '@theme/Layout';
+
+const MyPage = () => {
+  const {siteConfig} = useDocusaurusContext();
+  return (
+    <Layout title={siteConfig.title} description={siteConfig.tagline}>
+      <div className="hero text--center">
+        <div className="container ">
+          <div className="padding-vert--md">
+            <h1 className="hero__title">{siteConfig.title}</h1>
+            <p className="hero__subtitle">{siteConfig.tagline}</p>
+          </div>
+          <div>
+            <Link
+              to="/docs/get-started"
+              className="button button--lg button--outline button--primary">
+              Get started
+            </Link>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+};
+
+export default MyPage;
+```
+
+以下代码可能对迁移各种页面有所帮助：
+
+- 索引页 - [Flux](https://github.com/facebook/flux/blob/master/website/src/pages/index.js/)（推荐）、[Docusaurus 2](https://github.com/facebook/docusaurus/blob/main/website/src/pages/index.js/)、[Hermes](https://github.com/facebook/hermes/blob/main/website/src/pages/index.js/)
+- 帮助/支持页 - [Docusaurus 2](https://github.com/facebook/docusaurus/blob/main/website/src/pages/help.js/)、[Flux](http://facebook.github.io/flux/support)
+
+## 内容 {#content}
+
+### 替换 AUTOGENERATED_TABLE_OF_CONTENTS {#replace-autogenerated_table_of_contents}
+
+此功能被[内联目录](../../guides/markdown-features/markdown-features-toc.mdx#inline-table-of-contents)取代
+
+### 更新 Markdown 语法以与 MDX 兼容 {#update-markdown-syntax-to-be-mdx-compatible}
+
+在 Docusaurus 2 中，Markdown 语法已更改为 [MDX](https://mdxjs.com/)。因此，现有文档中可能存在一些损坏的语法，您需要更新。一个常见的例子是自闭合标签，如 `<img>` 和 `<br>`，它们在 HTML 中是有效的，但现在必须显式关闭（`<img/>` 和 `<br/>`）。MDX 文档中的所有标签都必须是有效的 JSX。
+
+Front matter 由 [gray-matter](https://github.com/jonschlinkert/gray-matter) 解析。如果您的 front matter 使用特殊字符，如 `:`，您现在需要将其引用起来：`title: Part 1: my part1 title` → `title: "Part 1: my part1 title"`。
+
+**提示**：您可能想使用一些在线工具，如 [HTML to JSX](https://transform.tools/html-to-jsx) 来使迁移更容易。
+
+### 特定语言的代码选项卡 {#language-specific-code-tabs}
+
+请参阅[多语言支持代码块](../../guides/markdown-features/markdown-features-code-blocks.mdx#multi-language-support-code-blocks)部分。
+
+### Front matter {#front-matter}
+
+博客的 Docusaurus front matter 字段已从驼峰式命名法更改为下划线命名法，以与文档保持一致。
+
+字段 `authorFBID` 和 `authorTwitter` 已被弃用。它们仅用于生成作者的个人资料图片，这可以通过 `authors` 字段完成。
+
+## 部署 {#deployment}
+
+GitHub Pages 使用的 `CNAME` 文件不再生成，因此如果您使用自定义域名，请确保您已在 `/static/CNAME` 中创建它。
+
+博客 RSS feed 现在托管在 `/blog/rss.xml` 而不是 `/blog/feed.xml`。您可能需要配置服务器端重定向，以便用户的订阅继续工作。
+
+## 测试您的站点 {#test-your-site}
+
+迁移后，您的文件夹结构应如下所示：
+
+```bash
+my-project
+├── docs
+└── website
+    ├── blog
+    ├── src
+    │   ├── css
+    │   │   └── custom.css
+    │   └── pages
+    │       └── index.js
+    ├── package.json
+    ├── sidebars.json
+    ├── .gitignore
+    ├── docusaurus.config.js
+    └── static
+```
+
+启动开发服务器并修复任何错误：
+
+```bash npm2yarn
+cd website
+npm start
+```
+
+您也可以尝试为生产环境构建站点：
+
+```bash npm2yarn
+npm run build
+```
+```
