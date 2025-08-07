@@ -1,0 +1,56 @@
+---
+title: no-untranslated-text
+sidebar_label: no-untranslated-text
+slug: /api/misc/@docusaurus/eslint-plugin/no-untranslated-text
+---
+
+# no-untranslated-text
+
+import APITable from '@site/src/components/APITable';
+
+强制 JSX 中的文本标签由翻译调用包装。
+
+当使用 [i18n 功能](../../../i18n/i18n-introduction.mdx)时，此规则可确保网站上出现的所有标签都是可翻译的，因此不会有任何字符串意外地未经翻译而溜走。
+
+## 规则详情 {#details}
+
+此规则的**不正确**代码示例：
+
+```js
+// Hello World 未被翻译
+<Component>Hello World</Component>
+```
+
+此规则的**正确**代码示例：
+
+```js
+// Hello World 已被翻译
+<Component>
+  <Translate>Hello World</Translate>
+</Component>
+```
+
+## 规则配置 {#configuration}
+
+接受的字段：
+
+```mdx-code-block
+<APITable>
+```
+
+| 选项 | 类型 | 默认值 | 描述 |
+| --- | --- | --- | --- |
+| `ignoredStrings` | `string[]` | `[]` | 仅包含此列表中字符串的文本标签将不会被报告。 |
+
+```mdx-code-block
+</APITable>
+```
+
+## 何时不使用 {#when-not-to-use}
+
+如果你不使用 [i18n 功能](../../../i18n/i18n-introduction.mdx)，可以禁用此规则。你也可以在文本不应被翻译的地方禁用此规则。
+
+## 延伸阅读 {#further-reading}
+
+- https://docusaurus.io/docs/docusaurus-core#translate
+- https://docusaurus.io/docs/docusaurus-core#translate-imperative

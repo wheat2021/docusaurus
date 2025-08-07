@@ -1,0 +1,73 @@
+---
+title: logger
+sidebar_label: logger
+sidebar_position: 2
+slug: /api/misc/@docusaurus/logger
+---
+
+# 📦 logger
+
+一个用于语义化格式化控制台消息的封装记录器。
+
+鼓励 Docusaurus 生态系统中的包作者使用此包来提供统一的日志格式。
+
+## API
+
+它默认导出一个单一对象：`logger`。`logger` 具有以下属性：
+
+- 一些有用的颜色。
+  - `red`
+  - `yellow`
+  - `green`
+  - `bold`
+  - `dim`
+- 格式化程序。这些函数都具有签名 `(msg: unknown) => string`。请注意，不保证它们的实现。你只需要关心它们的语义。
+  - `path`: 格式化文件路径。
+  - `url`: 格式化 URL。
+  - `name`: 格式化标识符。
+  - `code`: 格式化代码片段。
+  - `subdue`: 使文本变得柔和。
+  - `num`: 格式化数字。
+- `interpolate` 函数。它是一个模板字面量标签。语法见下文。
+- 日志记录函数。所有日志记录函数既可以作为普通函数（类似于 `console.log` 家族，但只接受一个参数）使用，也可以作为模板字面量标签使用。
+  - `info`: 打印信息。
+  - `warn`: 打印应引起注意的警告。
+  - `error`: 打印一个错误（不一定会停止程序），表示存在重大问题。
+  - `success`: 打印成功消息。
+- `report` 函数。它接受一个 `ReportingSeverity` 值（`ignore`、`log`、`warn`、`throw`）并根据严重性报告一条消息。
+
+:::warning 关于 `error` 格式化程序的说明
+
+请注意，即使 `error` 消息不会挂起程序，也可能会引起混淆。当用户检查日志并发现 `[ERROR]` 时，即使构建成功，他们也会认为出了问题。请谨慎使用。
+
+Docusaurus 仅在抛出错误前立即打印消息时，或当用户将 `onBrokenLink` 等的报告严重性设置为 `"error"` 时才使用 `logger.error`。
+
+此外，`warn` 和 `error` 会为**整个**消息着色以引起更多注意。如果你要打印关于错误的大块帮助文本，最好使用 `logger.info`。
+
+:::
+
+### 使用模板字面量标签
+
+模板字面量标签会评估模板和嵌入的表达式。`interpolate` 返回一个新字符串，而其他日志记录函数则打印它。以下是一个典型用法：
+
+```js
+import logger from '@docusaurus/logger';
+
+logger.info`Hello name=${name}! You have number=${money} dollars. Here are the ${
+  items.length > 1 ? 'items' : 'item'
+} on the shelf: ${items}
+To buy anything, enter code=${'buy x'} where code=${'x'} is the item's name; to quit, press code=${'Ctrl + C'}.`;
+```
+
+嵌入的表达式可以选择性地以 `[a-z]+=` 形式的标志为前缀（几个小写字母，后跟一个等号，直接位于嵌入表达式之前）。如果表达式没有前缀标志，则按原样打印。否则，它会用以下格式化程序之一进行格式化：
+
+- `path=`: `path`
+- `url=`: `url`
+- `name=`: `name`
+- `code=`: `code`
+- `subdue=`: `subdue`
+- `number=`: `num`
+
+如果表达式是一个数组，它会通过 `` `\n- ${array.join('\n- ')}\n` `` 进行格式化（请注意，它会自动获得一个前导换行符）。每个成员都自行格式化，项目符号不进行格式化。因此，你会看到上述消息打印如下：
+
+![终端中的一些文本输出，包含数组、代码、名称和数字格式](./demo.png)

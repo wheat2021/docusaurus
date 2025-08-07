@@ -1,0 +1,97 @@
+---
+title: plugin-css-cascade-layers
+sidebar_label: plugin-css-cascade-layers
+sidebar_position: 9
+slug: /api/plugins/@docusaurus/plugin-css-cascade-layers
+---
+
+# 📦 plugin-css-cascade-layers
+
+import APITable from '@site/src/components/APITable';
+
+:::caution 实验性
+
+此插件主要设计为通过 [Docusaurus `future.v4.useCssCascadeLayers` 标志](../docusaurus.config.js.mdx#future)由经典预设内部使用，但它也可以作为独立插件使用。如果你有使用场景，请[在此处告知我们](https://github.com/facebook/docusaurus/pull/11142)，并帮助我们设计一个对 Docusaurus 未来有意义的 API。
+
+:::
+
+一个用于将你的 Docusaurus 网站的 CSS 模块包装在 [CSS 级联层](https://css-tricks.com/css-cascade-layers/)中的插件。这个现代 CSS 功能得到了所有浏览器的广泛支持。它允许将 CSS 规则分组到不同特异性的层中，让你对 CSS 级联有更多的控制。
+
+使用此插件可以：
+
+- 在任何 CSS 模块周围应用一个顶级的 `@layer myLayer { ... }` 块规则，包括未分层的第三方 CSS。
+- 定义一个明确的层顺序
+
+:::caution
+
+要正确使用此插件，建议对 [CSS 级联层](https://css-tricks.com/css-cascade-layers/)、[CSS 级联](https://developer.mozilla.org/docs/Web/CSS/CSS_cascade/Cascade)和[特异性](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_cascade/Specificity)有深入的了解。
+
+:::
+
+## 安装 {#installation}
+
+```bash npm2yarn
+npm install --save @docusaurus/plugin-css-cascade-layers
+```
+
+:::tip
+
+如果你使用预设 `@docusaurus/preset-classic`，此插件会通过 [`siteConfig.future.v4.useCssCascadeLayers`](../docusaurus.config.js.mdx#future) 标志为你自动配置。
+
+:::
+
+## 配置 {#configuration}
+
+接受的字段：
+
+```mdx-code-block
+<APITable>
+```
+
+| 名称 | 类型 | 默认值 | 描述 |
+| --- | --- | --- | --- |
+| `layers` | `Layers` | **内置层** | 一个表示你想要使用的所有 CSS 级联层的对象，以及该层是否应应用于给定的文件路径。请参阅下面的示例和类型。 |
+
+```mdx-code-block
+</APITable>
+```
+
+### 类型 {#types}
+
+#### `Layers` {#EditUrlFunction}
+
+```ts
+type Layers = Record<
+  string, // layer name
+  (filePath: string) => boolean // layer matcher
+>;
+```
+
+`layers` 对象由以下内容定义：
+
+- 键：层的名称
+- 值：一个函数，用于定义给定的 CSS 模块文件是否应在该层中
+
+:::caution 顺序很重要
+
+对象顺序很重要：
+
+- 键的顺序定义了一个明确的 CSS 层顺序
+- 当多个层匹配一个文件路径时，只有第一个层会应用
+
+:::
+
+### 示例配置 {#ex-config}
+
+你可以通过插件选项配置此插件。
+
+```js
+const options = {
+  layers: {
+    'docusaurus.infima': (filePath) =>
+      filePath.includes('/node_modules/infima/dist'),
+    'docusaurus.theme-classic': (filePath) =>
+      filePath.includes('/node_modules/@docusaurus/theme-classic/lib'),
+  },
+};
+```
