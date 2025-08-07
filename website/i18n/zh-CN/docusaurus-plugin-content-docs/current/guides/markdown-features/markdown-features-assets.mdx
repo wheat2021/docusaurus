@@ -35,7 +35,7 @@ import TabItem from '@theme/TabItem';
 使用简单的 Markdown 语法显示图片：
 
 ```md
-![示例横幅](./assets/docusaurus-asset-example-banner.png)
+![示例横幅](../../assets/docusaurus-asset-example-banner.png)
 ```
 
 ```mdx-code-block
@@ -47,7 +47,7 @@ import TabItem from '@theme/TabItem';
 
 ```jsx
 <img
-  src={require('./assets/docusaurus-asset-example-banner.png').default}
+  src={require('../../assets/docusaurus-asset-example-banner.png').default}
   alt="示例横幅"
 />
 ```
@@ -60,7 +60,7 @@ import TabItem from '@theme/TabItem';
 使用 ES `import` 语法和 JSX 图片标签显示图片：
 
 ```jsx
-import myImageUrl from './assets/docusaurus-asset-example-banner.png';
+import myImageUrl from '../../assets/docusaurus-asset-example-banner.png';
 
 <img src={myImageUrl} alt="示例横幅" />;
 ```
@@ -91,11 +91,11 @@ import myImageUrl from './assets/docusaurus-asset-example-banner.png';
 ```md
 # 我的 Markdown 页面
 
-<a target="\_blank" href={require('./assets/docusaurus-asset-example.docx').default}> 下载此 docx </a>
+<a target="\_blank" href={require('../../assets/docusaurus-asset-example.docx').default}> 下载此 docx </a>
 
 或
 
-[使用 Markdown 下载此 docx](./assets/docusaurus-asset-example.docx)
+[使用 Markdown 下载此 docx](../../assets/docusaurus-asset-example.docx)
 ```
 
 <BrowserWindow>
