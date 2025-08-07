@@ -1,0 +1,310 @@
+# 使用插件
+
+**Docusaurus 核心本身不提供任何功能。** 所有功能都委托给各个插件：由[文档插件](./api/plugins/plugin-content-docs.mdx)提供的[文档](./guides/docs/docs-introduction.mdx)功能；由[博客插件](./api/plugins/plugin-content-blog.mdx)提供的[博客](./blog.mdx)功能；或由[页面插件](./api/plugins/plugin-content-pages.mdx)提供的单个[页面](./guides/creating-pages.mdx)。如果没有安装任何插件，网站将不包含任何路由。
+
+不过，您可能不需要逐一安装常用插件：它们可以在一个 [preset](#using-presets) 中作为捆绑包分发。对于大多数用户来说，插件是通过 preset 配置来配置的。
+
+我们维护了一个[官方插件列表](./api/plugins/overview.mdx)，但社区也创建了一些[非官方插件](/community/resources#community-plugins)。如果您想添加任何功能：自动生成文档页面、执行自定义脚本、集成其他服务……请务必查看列表：可能已经有人为您实现了！
+
+如果您精力充沛，也可以阅读[插件指南](./advanced/plugins.mdx)或[插件方法参考](./api/plugin-methods/README.mdx)来学习如何自己制作一个插件。
+
+## 安装插件 {#installing-a-plugin}
+
+插件通常是一个 npm 包，所以您可以像安装其他 npm 包一样使用 npm 来安装它们。
+
+```bash npm2yarn
+npm install --save docusaurus-plugin-name
+```
+
+然后，在您网站的 `docusaurus.config.js` 文件的 `plugins` 选项中添加它：
+
+```js title="docusaurus.config.js"
+export default {
+  // ...
+  // highlight-next-line
+  plugins: ['@docusaurus/plugin-content-pages'],
+};
+```
+
+Docusaurus 也可以从您的本地目录加载插件，如下所示：
+
+```js title="docusaurus.config.js"
+export default {
+  // ...
+  // highlight-next-line
+  plugins: ['./src/plugins/docusaurus-local-plugin'],
+};
+```
+
+路径应该是绝对路径或相对于配置文件的相对路径。
+
+## 配置插件 {#configuring-plugins}
+
+对于最基本的插件用法，您只需提供插件名称或插件路径。
+
+然而，插件可以通过在配置中将名称和选项对象包装在一个两元组中来指定选项。这种风格通常被称为“Babel 风格”。
+
+```js title="docusaurus.config.js"
+export default {
+  // ...
+  plugins: [
+    // highlight-start
+    [
+      '@docusaurus/plugin-xxx',
+      {
+        /* 选项 */
+      },
+    ],
+    // highlight-end
+  ],
+};
+```
+
+示例：
+
+```js title="docusaurus.config.js"
+export default {
+  plugins: [
+    // 基本用法
+    '@docusaurus/plugin-debug',
+
+    // 带选项对象（Babel 风格）
+    [
+      '@docusaurus/plugin-sitemap',
+      {
+        changefreq: 'weekly',
+      },
+    ],
+  ],
+};
+```
+
+## 多实例插件和插件 ID {#multi-instance-plugins-and-plugin-ids}
+
+所有 Docusaurus 内容插件都可以支持多个插件实例。例如，拥有[多个文档插件实例](./guides/docs/docs-multi-instance.mdx)或[多个博客](./blog.mdx#multiple-blogs)可能会很有用。需要为每个插件实例分配一个唯一的 ID，默认情况下，插件 ID 是 `default`。
+
+```js title="docusaurus.config.js"
+export default {
+  plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        // highlight-next-line
+        id: 'docs-1',
+        // 其他选项
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        // highlight-next-line
+        id: 'docs-2',
+        // 其他选项
+      },
+    ],
+  ],
+};
+```
+
+:::note
+
+最多只能有一个插件实例是“默认插件实例”，可以通过省略 `id` 属性，或使用 `id: 'default'` 来实现。
+
+:::
+
+## 使用主题 {#using-themes}
+
+主题的加载方式与插件完全相同。从消费者的角度来看，在安装和配置插件时，`themes` 和 `plugins` 条目是可以互换的。唯一的细微差别是主题在插件之后加载，并且[主题可以覆盖插件的默认主题组件](./advanced/client.mdx#theme-aliases)。
+
+:::tip
+
+`themes` 和 `plugins` 选项会导致不同的[模块简写解析](#module-shorthands)，所以如果您想利用简写，请确保使用正确的条目！
+
+:::
+
+```js title="docusaurus.config.js"
+export default {
+  // ...
+  // highlight-next-line
+  themes: ['@docusaurus/theme-classic', '@docusaurus/theme-live-codeblock'],
+};
+```
+
+## 使用 preset {#using-presets}
+
+Preset 是插件和主题的捆绑包。例如，我们有 `@docusaurus/preset-classic` preset，它允许您在一个集中的地方配置它们，而不是让您在配置文件中一个接一个地注册和配置 `@docusaurus/plugin-content-docs`、`@docusaurus/plugin-content-blog` 等。
+
+### `@docusaurus/preset-classic` {#docusauruspreset-classic}
+
+classic preset 是通过 [`create-docusaurus`](./installation.mdx#scaffold-project-website) 创建的新 Docusaurus 网站默认附带的。它包含以下主题和插件：
+
+- [`@docusaurus/theme-classic`](./api/themes/theme-configuration.mdx)
+- [`@docusaurus/theme-search-algolia`](./api/themes/theme-search-algolia.mdx)
+- [`@docusaurus/plugin-content-docs`](./api/plugins/plugin-content-docs.mdx)
+- [`@docusaurus/plugin-content-blog`](./api/plugins/plugin-content-blog.mdx)
+- [`@docusaurus/plugin-content-pages`](./api/plugins/plugin-content-pages.mdx)
+- [`@docusaurus/plugin-debug`](./api/plugins/plugin-debug.mdx)
+- [`@docusaurus/plugin-google-gtag`](./api/plugins/plugin-google-gtag.mdx)
+- [`@docusaurus/plugin-google-tag-manager`](./api/plugins/plugin-google-tag-manager.mdx)
+- [`@docusaurus/plugin-google-analytics`](./api/plugins/plugin-google-analytics.mdx) (**已弃用**)
+- [`@docusaurus/plugin-sitemap`](./api/plugins/plugin-sitemap.mdx)
+- [`@docusaurus/plugin-svgr`](./api/plugins/plugin-svgr.mdx)
+
+classic preset 会将每个选项条目中继到相应的插件/主题。
+
+```js title="docusaurus.config.js"
+export default {
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        // Debug 在开发模式下默认为 true，在生产模式下为 false
+        debug: undefined,
+        // 将传递给 @docusaurus/theme-classic
+        theme: {
+          customCss: ['./src/css/custom.css'],
+        },
+        // 将传递给 @docusaurus/plugin-content-docs（false 表示禁用）
+        docs: {},
+        // 将传递给 @docusaurus/plugin-content-blog（false 表示禁用）
+        blog: {},
+        // 将传递给 @docusaurus/plugin-content-pages（false 表示禁用）
+        pages: {},
+        // 将传递给 @docusaurus/plugin-sitemap（false 表示禁用）
+        sitemap: {},
+        // 将传递给 @docusaurus/plugin-svgr（false 表示禁用）
+        svgr: {},
+        // 将传递给 @docusaurus/plugin-google-gtag（仅在明确指定时启用）
+        gtag: {},
+        // 将传递给 @docusaurus/plugin-google-tag-manager（仅在明确指定时启用）
+        googleTagManager: {},
+        // 已弃用：将传递给 @docusaurus/plugin-google-analytics（仅在明确指定时启用）
+        googleAnalytics: {},
+      },
+    ],
+  ],
+};
+```
+
+### 安装 preset {#installing-presets}
+
+Preset 通常是一个 npm 包，所以您可以像安装其他 npm 包一样使用 npm 来安装它们。
+
+```bash npm2yarn
+npm install --save @docusaurus/preset-classic
+```
+
+然后，在您网站的 `docusaurus.config.js` 文件的 `presets` 选项中添加它：
+
+```js title="docusaurus.config.js"
+export default {
+  // ...
+  // highlight-next-line
+  presets: ['@docusaurus/preset-classic'],
+};
+```
+
+Preset 路径可以相对于配置文件：
+
+```js title="docusaurus.config.js"
+export default {
+  // ...
+  // highlight-next-line
+  presets: ['./src/presets/docusaurus-local-preset'],
+};
+```
+
+### 创建 preset {#creating-presets}
+
+Preset 是一个与[插件构造函数](./api/plugin-methods/README.mdx#plugin-constructor)具有相同形状的函数。它应该返回一个 `{ plugins: PluginConfig[], themes: PluginConfig[] }` 形式的对象，与站点配置中接受它们的方式相同。例如，您可以指定一个包含以下主题和插件的 preset：
+
+```js title="src/presets/docusaurus-preset-multi-docs.js"
+export default function preset(context, opts = {}) {
+  return {
+    themes: [['docusaurus-theme-awesome', opts.theme]],
+    plugins: [
+      // 同时使用三个文档插件！
+      // 为每个插件分配一个唯一的 ID，而无需用户手动操作
+      ['@docusaurus/plugin-content-docs', {...opts.docs1, id: 'docs1'}],
+      ['@docusaurus/plugin-content-docs', {...opts.docs2, id: 'docs2'}],
+      ['@docusaurus/plugin-content-docs', {...opts.docs3, id: 'docs3'}],
+    ],
+  };
+}
+```
+
+然后在您的 Docusaurus 配置中，您可以配置该 preset：
+
+```js title="docusaurus.config.js"
+export default {
+  presets: [
+    // highlight-start
+    [
+      './src/presets/docusaurus-preset-multi-docs.js',
+      {
+        theme: {hello: 'world'},
+        docs1: {path: '/docs'},
+        docs2: {path: '/community'},
+        docs3: {path: '/api'},
+      },
+    ],
+    // highlight-end
+  ],
+};
+```
+
+这等同于：
+
+```js title="docusaurus.config.js"
+export default {
+  themes: [['docusaurus-theme-awesome', {hello: 'world'}]],
+  plugins: [
+    ['@docusaurus/plugin-content-docs', {id: 'docs1', path: '/docs'}],
+    ['@docusaurus/plugin-content-docs', {id: 'docs2', path: '/community'}],
+    ['@docusaurus/plugin-content-docs', {id: 'docs3', path: '/api'}],
+  ],
+};
+```
+
+当某些插件和主题旨在一起使用时，这尤其有用。您甚至可以将它们的选项链接在一起，例如，将一个选项传递给多个插件。
+
+## 模块简写 {#module-shorthands}
+
+Docusaurus 支持插件、主题和 preset 的简写。当它看到一个插件/主题/preset 名称时，它会按顺序尝试加载以下之一：
+
+- `[name]` (例如 `content-docs`)
+- `@docusaurus/[moduleType]-[name]` (例如 `@docusaurus/plugin-content-docs`)
+- `docusaurus-[moduleType]-[name]` (例如 `docusaurus-plugin-content-docs`)
+
+其中 `moduleType` 是 `'preset'`、`'theme'` 或 `'plugin'` 之一，取决于模块名称在哪个字段中声明。第一个成功找到的模块名称将被加载。
+
+如果名称是带作用域的（以 `@` 开头），名称首先按第一个斜杠拆分为作用域和包名：
+
+```
+@scope
+^----^
+ 作用域  (无名称！)
+
+@scope/awesome
+^----^ ^-----^
+ 作用域   名称
+
+@scope/awesome/main
+^----^ ^----------^
+ 作用域     名称
+```
+
+如果没有名称（如 `@jquery`），则加载 `[scope]/docusaurus-[moduleType]`（即 `@jquery/docusaurus-plugin`）。否则，将尝试以下名称：
+
+- `[scope]/[name]` (例如 `@jquery/content-docs`)
+- `[scope]/docusaurus-[moduleType]-[name]` (例如 `@jquery/docusaurus-plugin-content-docs`)
+
+以下是一些示例，用于在 `plugins` 字段中注册的插件。请注意，与 [ESLint](https://eslint.org/docs/user-guide/configuring/plugins#configuring-plugins) 或 [Babel](https://babeljs.io/docs/en/options#name-normalization) 不同，Docusaurus 允许更大的命名自由度，因此解析不确定，但遵循上面定义的优先级。
+
+| 声明 | 可能解析为 |
+| --- | --- |
+| `awesome` | `docusaurus-plugin-awesome` |
+| `sitemap` | [`@docusaurus/plugin-sitemap`](./api/plugins/plugin-sitemap.mdx) |
+| `@my-company` | `@my-company/docusaurus-plugin` (唯一可能的解析！) |
+| `@my-company/awesome` | `@my-company/docusaurus-plugin-awesome` |
+| `@my-company/awesome/web` | `@my-company/docusaurus-plugin-awesome/web` |

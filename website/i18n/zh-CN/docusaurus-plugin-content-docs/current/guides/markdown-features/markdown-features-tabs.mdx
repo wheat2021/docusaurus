@@ -1,0 +1,378 @@
+---
+id: tabs
+description: 在 Docusaurus Markdown 中使用选项卡
+slug: /markdown-features/tabs
+---
+
+# 选项卡
+
+```mdx-code-block
+import BrowserWindow from '@site/src/components/BrowserWindow';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import styles from './markdown-features-tabs-styles.module.css';
+```
+
+Docusaurus 提供了 `<Tabs>` 组件，您可以在 Markdown 中使用它，这要归功于 [MDX](./markdown-features-react.mdx)：
+
+{/* prettier-ignore */}
+```jsx
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<Tabs>
+  <TabItem value="apple" label="苹果" default>
+    这是一个苹果 🍎
+  </TabItem>
+  <TabItem value="orange" label="橙子">
+    这是一个橙子 🍊
+  </TabItem>
+  <TabItem value="banana" label="香蕉">
+    这是一个香蕉 🍌
+  </TabItem>
+</Tabs>
+```
+
+```mdx-code-block
+<BrowserWindow>
+  <Tabs>
+    <TabItem value="apple" label="苹果">这是一个苹果 🍎</TabItem>
+    <TabItem value="orange" label="橙子">这是一个橙子 🍊</TabItem>
+    <TabItem value="banana" label="香蕉">这是一个香蕉 🍌</TabItem>
+  </Tabs>
+</BrowserWindow>
+```
+
+---
+
+也可以向 `Tabs` 提供 `values` 和 `defaultValue` props：
+
+```jsx
+<Tabs
+  defaultValue="apple"
+  values={[
+    {label: '苹果', value: 'apple'},
+    {label: '橙子', value: 'orange'},
+    {label: '香蕉', value: 'banana'},
+  ]}>
+  <TabItem value="apple">这是一个苹果 🍎</TabItem>
+  <TabItem value="orange">这是一个橙子 🍊</TabItem>
+  <TabItem value="banana">这是一个香蕉 🍌</TabItem>
+</Tabs>
+```
+
+```mdx-code-block
+<BrowserWindow>
+  <Tabs
+    defaultValue="apple"
+    values={[
+      {label: '苹果', value: 'apple'},
+      {label: '橙子', value: 'orange'},
+      {label: '香蕉', value: 'banana'},
+    ]}>
+    <TabItem value="apple">这是一个苹果 🍎</TabItem>
+    <TabItem value="orange">这是一个橙子 🍊</TabItem>
+    <TabItem value="banana">这是一个香蕉 🍌</TabItem>
+  </Tabs>
+</BrowserWindow>
+```
+
+<details>
+  <summary><code>Tabs</code> 的 props 优先于 <code>TabItem</code> 的 props：</summary>
+
+```jsx
+<Tabs
+  defaultValue="apple"
+  values={[
+    {label: '苹果 1', value: 'apple'},
+    {label: '橙子 1', value: 'orange'},
+    {label: '香蕉 1', value: 'banana'},
+  ]}>
+  <TabItem value="apple" label="苹果 2">
+    这是一个苹果 🍎
+  </TabItem>
+  <TabItem value="orange" label="橙子 2">
+    这是一个橙子 🍊
+  </TabItem>
+  <TabItem value="banana" label="香蕉 2" default>
+    这是一个香蕉 🍌
+  </TabItem>
+</Tabs>
+```
+
+```mdx-code-block
+<BrowserWindow>
+  <Tabs
+    defaultValue="apple"
+    values={[
+      {label: '苹果 1', value: 'apple'},
+      {label: '橙子 1', value: 'orange'},
+      {label: '香蕉 1', value: 'banana'},
+    ]}>
+    <TabItem value="apple" label="苹果 2">这是一个苹果 🍎</TabItem>
+    <TabItem value="orange" label="橙子 2">这是一个橙子 🍊</TabItem>
+    <TabItem value="banana" label="香蕉 2" default>这是一个香蕉 🍌</TabItem>
+  </Tabs>
+</BrowserWindow>
+```
+
+</details>
+
+:::tip
+
+默认情况下，所有选项卡在构建过程中都会被急切渲染，搜索引擎可以索引隐藏的选项卡。
+
+可以通过 `<Tabs lazy />` 仅渲染默认选项卡。
+
+:::
+
+## 显示默认选项卡 {#displaying-a-default-tab}
+
+默认情况下显示第一个选项卡，要覆盖此行为，您可以通过向其中一个选项卡项添加 `default` 来指定一个默认选项卡。您也可以将 `Tabs` 组件的 `defaultValue` prop 设置为您选择的标签值。例如，在上面的示例中，为 `value="apple"` 的选项卡设置 `default` 或为选项卡设置 `defaultValue="apple"` 都会强制“苹果”选项卡默认打开。
+
+如果为 `Tabs` 提供了 `defaultValue` 但它引用了一个不存在的值，Docusaurus 将抛出一个错误。如果您想默认不显示任何选项卡，请使用 `defaultValue={null}`。
+
+## 同步选项卡选择 {#syncing-tab-choices}
+
+您可能希望同类选项卡的选择能够相互同步。例如，您可能希望为 Windows 用户和 macOS 用户提供不同的说明，并且希望一键更改所有特定于操作系统的说明选项卡。为此，您可以给所有相关的选项卡相同的 `groupId` prop。请注意，这样做会将选择持久化在 `localStorage` 中，并且当其中一个的值更改时，所有具有相同 `groupId` 的 `<Tab>` 实例将自动更新。请注意，组 ID 是全局命名空间的。
+
+```jsx
+// highlight-next-line
+<Tabs groupId="operating-systems">
+  <TabItem value="win" label="Windows">使用 Ctrl + C 复制。</TabItem>
+  <TabItem value="mac" label="macOS">使用 Command + C 复制。</TabItem>
+</Tabs>
+
+// highlight-next-line
+<Tabs groupId="operating-systems">
+  <TabItem value="win" label="Windows">使用 Ctrl + V 粘贴。</TabItem>
+  <TabItem value="mac" label="macOS">使用 Command + V 粘贴。</TabItem>
+</Tabs>
+```
+
+```mdx-code-block
+<BrowserWindow>
+  <Tabs groupId="operating-systems">
+    <TabItem value="win" label="Windows">使用 Ctrl + C 复制。</TabItem>
+    <TabItem value="mac" label="macOS">使用 Command + C 复制。</TabItem>
+  </Tabs>
+
+  <Tabs groupId="operating-systems">
+    <TabItem value="win" label="Windows">使用 Ctrl + V 粘贴。</TabItem>
+    <TabItem value="mac" label="macOS">使用 Command + V 粘贴。</TabItem>
+  </Tabs>
+</BrowserWindow>
+```
+
+对于所有具有相同 `groupId` 的选项卡组，可能的值不必相同。如果一个选项卡组选择了一个在另一个具有相同 `groupId` 的选项卡组中不存在的值，则缺少该值的选项卡组不会更改其选项卡。您可以从以下示例中看到这一点。尝试选择 Linux，上面的选项卡组不会改变。
+
+```jsx
+<Tabs groupId="operating-systems">
+  <TabItem value="win" label="Windows">
+    我是 Windows。
+  </TabItem>
+  <TabItem value="mac" label="macOS">
+    我是 macOS。
+  </TabItem>
+  <TabItem value="linux" label="Linux">
+    我是 Linux。
+  </TabItem>
+</Tabs>
+```
+
+```mdx-code-block
+<BrowserWindow>
+  <Tabs groupId="operating-systems">
+    <TabItem value="win" label="Windows">我是 Windows。</TabItem>
+    <TabItem value="mac" label="macOS">我是 macOS。</TabItem>
+    <TabItem value="linux" label="Linux">我是 Linux。</TabItem>
+  </Tabs>
+</BrowserWindow>
+```
+
+---
+
+具有不同组 ID 的选项卡选择不会相互干扰：
+
+```jsx
+// highlight-next-line
+<Tabs groupId="operating-systems">
+  <TabItem value="win" label="Windows">Windows 中的 Windows。</TabItem>
+  <TabItem value="mac" label="macOS">macOS 就是 macOS。</TabItem>
+</Tabs>
+
+// highlight-next-line
+<Tabs groupId="non-mac-operating-systems">
+  <TabItem value="win" label="Windows">Windows 就是 Windows。</TabItem>
+  <TabItem value="unix" label="Unix">Unix 就是 Unix。</TabItem>
+</Tabs>
+```
+
+```mdx-code-block
+<BrowserWindow>
+  <Tabs groupId="operating-systems">
+    <TabItem value="win" label="Windows">Windows 中的 Windows。</TabItem>
+    <TabItem value="mac" label="macOS">macOS 就是 macOS。</TabItem>
+  </Tabs>
+
+  <Tabs groupId="non-mac-operating-systems">
+    <TabItem value="win" label="Windows">Windows 就是 Windows。</TabItem>
+    <TabItem value="unix" label="Unix">Unix 就是 Unix。</TabItem>
+  </Tabs>
+</BrowserWindow>
+```
+
+## 自定义选项卡 {#customizing-tabs}
+
+您可能希望自定义某组选项卡的外观。您可以将字符串传递给 `className` prop，指定的 CSS 类将被添加到 `Tabs` 组件中：
+
+```jsx
+// highlight-next-line
+<Tabs className="unique-tabs">
+  <TabItem value="Apple">这是一个苹果 🍎</TabItem>
+  <TabItem value="Orange">这是一个橙子 🍊</TabItem>
+  <TabItem value="Banana">这是一个香蕉 🍌</TabItem>
+</Tabs>
+```
+
+```mdx-code-block
+<BrowserWindow>
+  <Tabs className="unique-tabs">
+    <TabItem value="Apple">这是一个苹果 🍎</TabItem>
+    <TabItem value="Orange">这是一个橙子 🍊</TabItem>
+    <TabItem value="Banana">这是一个香蕉 🍌</TabItem>
+  </Tabs>
+</BrowserWindow>
+```
+
+### 自定义选项卡标题 {#customizing-tab-headings}
+
+您还可以使用 `attributes` 字段独立自定义每个选项卡标题。额外的 props 可以通过 `Tabs` 中的 `values` prop 或每个 `TabItem` 的 props 传递——与声明 `label` 的方式相同。
+
+{/* prettier-ignore */}
+```jsx title="some-doc.mdx"
+import styles from './styles.module.css';
+
+<Tabs>
+  <TabItem value="apple" label="苹果" attributes={{className: styles.red}}>
+    这是一个苹果 🍎
+  </TabItem>
+  <TabItem value="orange" label="橙子" attributes={{className: styles.orange}}>
+    这是一个橙子 🍊
+  </TabItem>
+  <TabItem value="banana" label="香蕉" attributes={{className: styles.yellow}}>
+    这是一个香蕉 🍌
+  </TabItem>
+</Tabs>
+```
+
+```css title="styles.module.css"
+.red {
+  color: red;
+}
+.red[aria-selected='true'] {
+  border-bottom-color: red;
+}
+
+.orange {
+  color: orange;
+}
+.orange[aria-selected='true'] {
+  border-bottom-color: orange;
+}
+
+.yellow {
+  color: yellow;
+}
+.yellow[aria-selected='true'] {
+  border-bottom-color: yellow;
+}
+```
+
+```mdx-code-block
+<BrowserWindow>
+  <Tabs>
+    <TabItem value="apple" label="苹果" attributes={{className: styles.red}}>
+      这是一个苹果 🍎
+    </TabItem>
+    <TabItem value="orange" label="橙子" attributes={{className: styles.orange}}>
+      这是一个橙子 🍊
+    </TabItem>
+    <TabItem value="banana" label="香蕉" attributes={{className: styles.yellow}}>
+      这是一个香蕉 🍌
+    </TabItem>
+  </Tabs>
+</BrowserWindow>
+```
+
+:::tip
+
+`className` 将与其他默认类名合并。您也可以使用自定义的 `data-value` 字段（`{'data-value': 'apple'}`）与 CSS 属性选择器配对：
+
+```css title="styles.module.css"
+li[role='tab'][data-value='apple'] {
+  color: red;
+}
+```
+
+:::
+
+## 查询字符串 {#query-string}
+
+可以将选定的选项卡持久化到 URL 搜索参数中。这使您能够共享一个预选了选项卡的页面链接——例如，从您的 Android 应用链接到预选了 Android 选项卡的文档。此功能不提供锚链接——浏览器不会滚动到选项卡。
+
+使用 `queryString` prop 来启用此功能并定义要使用的搜索参数名称。
+
+```tsx
+// highlight-next-line
+<Tabs queryString="current-os">
+  <TabItem value="android" label="Android">
+    Android
+  </TabItem>
+  <TabItem value="ios" label="iOS">
+    iOS
+  </TabItem>
+</Tabs>
+```
+
+```mdx-code-block
+<BrowserWindow>
+  <Tabs queryString='current-os'>
+    <TabItem value="android" label="Android">Android</TabItem>
+    <TabItem value="ios" label="iOS">iOS</TabItem>
+  </Tabs>
+</BrowserWindow>
+```
+
+一旦点击一个选项卡，一个搜索参数就会被添加到 URL 的末尾：`?current-os=android` 或 `?current-os=ios`。
+
+:::tip
+
+`queryString` 可以与 `groupId` 一起使用。
+
+为方便起见，当 `queryString` prop 为 `true` 时，`groupId` 值将用作后备。
+
+```tsx
+// highlight-next-line
+<Tabs groupId="current-os" queryString>
+  <TabItem value="android" label="Android">
+    Android
+  </TabItem>
+  <TabItem value="ios" label="iOS">
+    iOS
+  </TabItem>
+</Tabs>
+```
+
+```mdx-code-block
+<BrowserWindow>
+  <Tabs queryString groupId="current-os">
+    <TabItem value="android" label="Android">Android</TabItem>
+    <TabItem value="ios" label="iOS">iOS</TabItem>
+  </Tabs>
+</BrowserWindow>
+```
+
+当页面加载时，选项卡查询字符串的选择将优先于 `groupId` 的选择（使用 `localStorage`）进行恢复。
+
+:::

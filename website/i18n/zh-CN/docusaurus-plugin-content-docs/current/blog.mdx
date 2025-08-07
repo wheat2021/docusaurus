@@ -1,0 +1,781 @@
+---
+description: 使用 Docusaurus 快速部署功能齐全的博客。
+---
+
+# 博客
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+博客功能可让您快速部署一个功能齐全的博客。
+
+:::info
+
+请查阅[博客插件 API 参考文档](./api/plugins/plugin-content-blog.mdx)以获取完整的选项列表。
+
+:::
+
+## 初始设置 {#initial-setup}
+
+要设置您网站的博客，请先创建一个 `blog` 目录。
+
+然后，在 `docusaurus.config.js` 中添加一个指向您博客的导航栏链接：
+
+```js title="docusaurus.config.js"
+export default {
+  themeConfig: {
+    // ...
+    navbar: {
+      items: [
+        // ...
+        // highlight-next-line
+        {to: 'blog', label: '博客', position: 'left'}, // 或 position: 'right'
+      ],
+    },
+  },
+};
+```
+
+## 添加文章 {#adding-posts}
+
+要在博客中发布文章，请在博客目录中创建一个 Markdown 文件。
+
+例如，在 `website/blog/2019-09-05-hello-docusaurus.md` 创建一个文件：
+
+```md title="website/blog/2019-09-05-hello-docusaurus.md"
+---
+title: 欢迎来到 Docusaurus
+description: 这是我在 Docusaurus 上的第一篇文章。
+slug: welcome-docusaurus-v2
+authors:
+  - name: Joel Marcey
+    title: Docusaurus 1 的共同创造者
+    url: https://github.com/JoelMarcey
+    image_url: https://github.com/JoelMarcey.png
+    socials:
+      x: joelmarcey
+      github: JoelMarcey
+  - name: Sébastien Lorber
+    title: Docusaurus 维护者
+    url: https://sebastienlorber.com
+    image_url: https://github.com/slorber.png
+    socials:
+      x: sebastienlorber
+      github: slorber
+tags: [hello, docusaurus-v2]
+image: https://i.imgur.com/mErPwqL.png
+hide_table_of_contents: false
+---
+
+欢迎阅读这篇博客。本博客是使用 [**Docusaurus**](https://docusaurus.io/) 创建的。
+
+<!-- truncate -->
+
+这是我在 Docusaurus 上的第一篇文章。
+
+接下来还有一大堆探索等着呢。
+```
+
+[Front Matter](./guides/markdown-features/markdown-features-intro.mdx#front-matter) 对于为您的博客文章添加更多元数据非常有用，例如作者信息，但即使没有 front matter，Docusaurus 也能够推断出所有必要的元数据。有关所有可能的字段，请参阅 [API 文档](api/plugins/plugin-content-blog.mdx#markdown-front-matter)。
+
+## 博客列表 {#blog-list}
+
+博客的索引页面（默认为 `/blog`）是**博客列表页**，所有博客文章都会在这里集中展示。
+
+在您的博客文章中使用 `<!--truncate-->` 标记来表示在查看所有已发布的博客文章时将显示为摘要的内容。`<!--truncate-->` 上方的任何内容都将成为摘要的一部分。请注意，截断标记上方的部分必须是可独立渲染的 Markdown。例如：
+
+```md title="website/blog/my-post.md" {7}
+---
+title: Markdown 博客截断示例
+---
+
+所有这些内容都将成为博客文章摘要的一部分。
+
+<!-- truncate -->
+
+但从这里开始的任何内容都不会。
+```
+
+对于使用 `.mdx` 扩展名的文件，请改用 [MDX](https://mdxjs.com/) 注释 `{/* truncate */}`：
+
+{/* prettier-ignore */}
+```md title="website/blog/my-post.mdx" {7}
+---
+title: MDX 博客截断示例
+---
+
+所有这些内容都将成为博客文章摘要的一部分。
+
+{/* truncate */}
+
+但从这里开始的任何内容都不会。
+```
+
+默认情况下，每个博客列表页显示 10 篇文章，但您可以通过插件配置中的 `postsPerPage` 选项来控制分页。如果设置 `postsPerPage: 'ALL'`，分页将被禁用，所有文章都将显示在第一页上。您还可以为博客列表页添加元描述以优化 SEO：
+
+```js title="docusaurus.config.js"
+export default {
+  // ...
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        blog: {
+          // highlight-start
+          blogTitle: 'Docusaurus 博客！',
+          blogDescription: '一个由 Docusaurus 驱动的博客！',
+          postsPerPage: 'ALL',
+          // highlight-end
+        },
+      },
+    ],
+  ],
+};
+```
+
+## 博客侧边栏 {#blog-sidebar}
+
+博客侧边栏显示最近的博客文章。默认显示的项目数量为 5，但您可以使用插件配置中的 `blogSidebarCount` 选项进行自定义。通过设置 `blogSidebarCount: 0`，侧边栏将被完全禁用，其容器也会被移除。这将增加主容器的宽度。特别地，如果您设置了 `blogSidebarCount: 'ALL'`，则将显示_所有_文章。
+
+您还可以使用 `blogSidebarTitle` 选项更改侧边栏的标题文本。例如，如果您设置了 `blogSidebarCount: 'ALL'`，您可能希望将默认的“近期文章”更改为“所有文章”：
+
+```js title="docusaurus.config.js"
+export default {
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        blog: {
+          // highlight-start
+          blogSidebarTitle: '所有文章',
+          blogSidebarCount: 'ALL',
+          // highlight-end
+        },
+      },
+    ],
+  ],
+};
+```
+
+## 博客文章日期 {#blog-post-date}
+
+Docusaurus 会从多种模式中提取 `YYYY-MM-DD` 格式的日期，例如 `YYYY-MM-DD-my-blog-post-title.md` 或 `YYYY/MM/DD/my-blog-post-title.md`。这使您可以轻松地按年、月对博客文章进行分组，或使用扁平结构。
+
+<details>
+<summary>支持的日期提取模式</summary>
+
+| 模式 | 示例 |
+| --- | --- |
+| 单个文件 | `2021-05-28-my-blog-post-title.md` |
+| MDX 文件 | `2021-05-28-my-blog-post-title.mdx` |
+| 单个文件夹 + `index.md` | `2021-05-28-my-blog-post-title/index.md` |
+| 按日期命名的文件夹 | `2021-05-28/my-blog-post-title.md` |
+| 按日期嵌套的文件夹 | `2021/05/28/my-blog-post-title.md` |
+| 部分按日期嵌套的文件夹 | `2021/05-28-my-blog-post-title.md` |
+| 嵌套文件夹 + `index.md` | `2021/05/28/my-blog-post-title/index.md` |
+| 路径中间的日期 | `category/2021/05-28-my-blog-post-title.md` |
+
+Docusaurus 可以使用上述任何命名模式从文章中提取日期。建议选择一种模式并将其应用于所有文章，以避免混淆。
+
+</details>
+
+:::tip
+
+使用文件夹可以方便地将博客文章的图片与 Markdown 文件放在一起。
+
+:::
+
+这种命名约定是可选的，您也可以在 front matter 中提供日期。由于 front matter 遵循支持日期时间表示法的 YAML 语法，因此如果您需要更精细的发布日期，可以使用 front matter。例如，如果您有多篇文章在同一天发布，您可以根据一天中的时间对它们进行排序：
+
+```md title="earlier-post.md"
+---
+date: 2021-09-13T10:00
+---
+```
+
+```md title="later-post.md"
+---
+date: 2021-09-13T18:00
+---
+```
+
+## 博客文章作者 {#blog-post-authors}
+
+使用 `authors` front matter 字段来声明博客文章的作者。作者至少应有一个 `name` 或一个 `image_url`。Docusaurus 使用 `url`、`email` 和 `title` 等信息，但也允许任何其他信息。
+
+### 内联作者 {#inline-authors}
+
+博客文章的作者可以直接在 front matter 中声明：
+
+```mdx-code-block
+<Tabs groupId="author-front-matter">
+<TabItem value="single" label="单个作者">
+```
+
+```md title="my-blog-post.md"
+---
+authors:
+  name: Joel Marcey
+  title: Docusaurus 1 的共同创造者
+  url: https://github.com/JoelMarcey
+  image_url: https://github.com/JoelMarcey.png
+  email: jimarcey@gmail.com
+  socials:
+    x: joelmarcey
+    github: JoelMarcey
+---
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="multiple" label="多个作者">
+```
+
+```md title="my-blog-post.md"
+---
+authors:
+  - name: Joel Marcey
+    title: Docusaurus 1 的共同创造者
+    url: https://github.com/JoelMarcey
+    image_url: https://github.com/JoelMarcey.png
+    email: jimarcey@gmail.com
+    socials:
+      x: joelmarcey
+      github: JoelMarcey
+  - name: Sébastien Lorber
+    title: Docusaurus 维护者
+    url: https://sebastienlorber.com
+    image_url: https://github.com/slorber.png
+    socials:
+      x: sebastienlorber
+      github: slorber
+---
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
+```
+
+:::tip
+
+此选项最适合入门，或用于临时的、不固定的作者。
+
+:::
+
+:::info
+
+推荐使用 `authors` front matter，但旧版的 `author_*` front matter 仍然受支持：
+
+```md title="my-blog-post.md"
+---
+author: Joel Marcey
+author_title: Docusaurus 1 的共同创造者
+author_url: https://github.com/JoelMarcey
+author_image_url: https://github.com/JoelMarcey.png
+---
+```
+
+:::
+
+### 全局作者 {#global-authors}
+
+对于固定的博客文章作者，在每篇文章中内联维护作者信息可能很繁琐。
+
+可以在一个配置文件中全局声明这些作者：
+
+```yml title="website/blog/authors.yml"
+jmarcey:
+  name: Joel Marcey
+  title: Docusaurus 1 的共同创造者
+  url: https://github.com/JoelMarcey
+  image_url: https://github.com/JoelMarcey.png
+  email: jimarcey@gmail.com
+  socials:
+    x: joelmarcey
+    github: JoelMarcey
+
+slorber:
+  name: Sébastien Lorber
+  title: Docusaurus 维护者
+  url: https://sebastienlorber.com
+  image_url: https://github.com/slorber.png
+  socials:
+    x: sebastienlorber
+    github: slorber
+```
+
+:::tip
+
+使用 `authorsMapPath` 插件选项来配置路径。也支持 JSON 格式。
+
+:::
+
+在博客文章的 front matter 中，您可以引用在全局配置文件中声明的作者：
+
+```mdx-code-block
+<Tabs groupId="author-front-matter">
+<TabItem value="single" label="单个作者">
+```
+
+```md title="my-blog-post.md"
+---
+authors: jmarcey
+---
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="multiple" label="多个作者">
+```
+
+```md title="my-blog-post.md"
+---
+authors: [jmarcey, slorber]
+---
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
+```
+
+:::info
+
+`authors` 系统非常灵活，可以适应更高级的用例：
+
+<details>
+  <summary>混合使用内联作者和全局作者</summary>
+
+您可以大部分时间使用全局作者，但仍然可以使用内联作者：
+
+```md title="my-blog-post.md"
+---
+authors:
+  - jmarcey
+  - slorber
+  - name: 内联作者姓名
+    title: 内联作者头衔
+    url: https://github.com/inlineAuthor
+    image_url: https://github.com/inlineAuthor
+---
+```
+
+</details>
+
+<details>
+  <summary>本地覆盖全局作者</summary>
+
+您可以针对每篇博客文章自定义全局作者的数据：
+
+```md title="my-blog-post.md"
+---
+authors:
+  - key: jmarcey
+    title: Joel Marcey 的新头衔
+  - key: slorber
+    name: Sébastien Lorber 的新名字
+---
+```
+
+</details>
+
+<details>
+  <summary>本地化作者配置文件</summary>
+
+配置文件可以被本地化，只需在以下路径创建其本地化副本：
+
+```bash
+website/i18n/[locale]/docusaurus-plugin-content-blog/authors.yml
+```
+
+</details>
+
+:::
+
+一个作者，无论是通过 front matter 还是通过作者映射声明，都需要有一个名字或一个头像，或两者兼有。如果一篇文章的所有作者都没有名字，Docusaurus 将紧凑地显示他们的头像。效果请参见[这篇测试文章](/tests/blog/2022/01/20/image-only-authors)。
+
+:::warning Feed 生成
+
+[RSS feeds](#feed) 要求作者设置邮箱，以便作者出现在 feed 中。
+
+:::
+
+### 作者页面 {#authors-pages}
+
+作者页面功能是可选的，主要用于多作者博客。
+
+您可以通过在[全局作者配置](#global-authors)中为每个作者添加 `page: true` 属性来独立激活它：
+
+```yml title="website/blog/authors.yml"
+slorber:
+  name: Sébastien Lorber
+  // highlight-start
+  page: true # 开启此功能 - 路由将是 /authors/slorber
+  // highlight-end
+
+jmarcey:
+  name: Joel Marcey
+  // highlight-start
+  page:
+    # 开启此功能 - 路由将是 /authors/custom-author-url
+    permalink: '/custom-author-url'
+  // highlight-end
+```
+
+现在，博客插件将生成：
+
+- 每个作者的专属作者页面（[示例](/blog/authors/slorber)），列出他们贡献的所有博客文章
+- 一个作者索引页面（[示例](/blog/authors)），按 `authors.yml` 中的顺序排列所有这些作者
+
+:::warning 关于内联作者
+
+只有[全局作者](#global-authors)可以激活此功能。不支持[内联作者](#inline-authors)。
+
+:::
+
+## 博客文章标签 {#blog-post-tags}
+
+标签在 front matter 中声明，并引入了另一个分类维度。
+
+可以内联定义标签，也可以引用在[`标签文件`](api/plugins/plugin-content-blog.mdx#tags-file)（可选，通常是 `blog/tags.yml`）中预定义的标签。
+
+在以下示例中：
+
+- `docusaurus` 引用了在 `blog/tags.yml` 中声明的预定义标签键
+- `Releases` 是一个内联标签，因为它不存在于 `blog/tags.yml` 中
+
+```md title="blog/my-post.md"
+---
+title: '我的博客文章'
+tags:
+  - Releases
+  - docusaurus
+---
+
+内容
+```
+
+```yml title="blog/tags.yml"
+docusaurus:
+  label: 'Docusaurus'
+  permalink: '/docusaurus'
+  description: '与 Docusaurus 框架相关的博客文章'
+```
+
+## 阅读时间 {#reading-time}
+
+Docusaurus 根据字数估算每篇博客文章的阅读时间。我们提供了一个选项来自定义此功能。
+
+```js title="docusaurus.config.js"
+export default {
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        blog: {
+          // highlight-start
+          showReadingTime: true, // 设置为 false 时，将不显示“x 分钟阅读”
+          readingTime: ({content, locale, frontMatter, defaultReadingTime}) =>
+            defaultReadingTime({
+              content,
+              locale,
+              options: {wordsPerMinute: 300},
+            }),
+          // highlight-end
+        },
+      },
+    ],
+  ],
+};
+```
+
+`readingTime` 回调函数接收以下参数：
+
+- `content`: 博客内容的字符串
+- `frontMatter`: front matter，键为字符串，值为其对应值的记录
+- `locale`: 当前 Docusaurus 网站的区域设置
+- `defaultReadingTime`: 默认的内置阅读时间函数。它返回一个数字（以分钟为单位的阅读时间）或 `undefined`（禁用此页面的阅读时间）。
+
+默认的阅读时间函数可以接受额外的选项：
+
+- `wordsPerMinute`，一个数字（默认为 300）
+
+:::tip
+
+使用回调函数满足您所有的自定义需求：
+
+```mdx-code-block
+<Tabs>
+<TabItem value="disable-per-post" label="单篇文章禁用">
+```
+
+**在单个页面上禁用阅读时间：**
+
+```js title="docusaurus.config.js"
+export default {
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        blog: {
+          showReadingTime: true,
+          // highlight-start
+          readingTime: ({content, locale, frontMatter, defaultReadingTime}) =>
+            frontMatter.hide_reading_time
+              ? undefined
+              : defaultReadingTime({content, locale}),
+          // highlight-end
+        },
+      },
+    ],
+  ],
+};
+```
+
+用法：
+
+```md "my-blog-post.md"
+---
+hide_reading_time: true
+---
+
+此页面将不再显示阅读时间统计信息！
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="passing-options" label="传递选项">
+```
+
+**向默认阅读时间函数传递选项：**
+
+```js title="docusaurus.config.js"
+export default {
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        blog: {
+          // highlight-start
+          readingTime: ({content, locale, defaultReadingTime}) =>
+            defaultReadingTime({
+              content,
+              locale,
+              options: {wordsPerMinute: 100},
+            }),
+          // highlight-end
+        },
+      },
+    ],
+  ],
+};
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="using-custom-algo" label="使用自定义算法">
+```
+
+**使用自定义的阅读时间实现：**
+
+```js title="docusaurus.config.js"
+import myReadingTime from './myReadingTime';
+
+export default {
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        blog: {
+          // highlight-next-line
+          readingTime: ({content, locale}) => myReadingTime(content, locale),
+        },
+      },
+    ],
+  ],
+};
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
+```
+
+:::
+
+## Feed {#feed}
+
+您可以通过传递 `feedOptions` 来生成 RSS / Atom / JSON feed。默认情况下，会生成 RSS 和 Atom feed。要禁用 feed 生成，请将 `feedOptions.type` 设置为 `null`。
+
+```ts
+type FeedType = 'rss' | 'atom' | 'json';
+
+type BlogOptions = {
+  feedOptions?: {
+    type?: FeedType | 'all' | FeedType[] | null;
+    title?: string;
+    description?: string;
+    copyright: string;
+
+    language?: string; // 可能的值: http://www.w3.org/TR/REC-html40/struct/dirlang.html#langcodes
+    limit?: number | false | null; // 默认为 20
+    // XSLT 允许浏览器美观地样式化和渲染 feed XML 文件
+    xslt?:
+      | boolean
+      | {
+          //
+          rss?: string | boolean;
+          atom?: string | boolean;
+        };
+    // 允许控制 BlogFeedItems 的构建
+    createFeedItems?: (params: {
+      blogPosts: BlogPost[];
+      siteConfig: DocusaurusConfig;
+      outDir: string;
+      defaultCreateFeedItems: (params: {
+        blogPosts: BlogPost[];
+        siteConfig: DocusaurusConfig;
+        outDir: string;
+      }) => Promise<BlogFeedItem[]>;
+    }) => Promise<BlogFeedItem[]>;
+  };
+};
+```
+
+用法示例：
+
+```js title="docusaurus.config.js"
+export default {
+  // ...
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        blog: {
+          // highlight-start
+          feedOptions: {
+            type: 'all',
+            copyright: `Copyright © ${new Date().getFullYear()} Facebook, Inc.`,
+            createFeedItems: async (params) => {
+              const {blogPosts, defaultCreateFeedItems, ...rest} = params;
+              return defaultCreateFeedItems({
+                // 只在 feed 中保留最近的 10 篇博客文章
+                blogPosts: blogPosts.filter((item, index) => index < 10),
+                ...rest,
+              });
+            },
+          },
+          // highlight-end
+        },
+      },
+    ],
+  ],
+};
+```
+
+可以在以下地址找到 feed：
+
+<Tabs>
+<TabItem value="RSS">
+
+```text
+https://example.com/blog/rss.xml
+```
+
+</TabItem>
+<TabItem value="Atom">
+
+```text
+https://example.com/blog/atom.xml
+```
+
+</TabItem>
+<TabItem value="JSON">
+
+```text
+https://example.com/blog/feed.json
+```
+
+</TabItem>
+</Tabs>
+
+## 高级主题 {#advanced-topics}
+
+### 纯博客模式 {#blog-only-mode}
+
+您可以运行一个没有专门着陆页的 Docusaurus 网站，而是将博客的文章列表页作为索引页。将 `routeBasePath` 设置为 `'/'`，以便通过根路由 `example.com/` 而不是子路由 `example.com/blog/` 来提供博客服务。
+
+```js title="docusaurus.config.js"
+export default {
+  // ...
+  presets: [
+    [
+      '@docusaurus/preset-classic',
+      {
+        // highlight-next-line
+        docs: false, // 可选：禁用文档插件
+        blog: {
+          // highlight-next-line
+          routeBasePath: '/', // 在网站根目录提供博客服务
+          /* 其他博客选项 */
+        },
+      },
+    ],
+  ],
+};
+```
+
+:::warning
+
+不要忘记删除位于 `./src/pages/index.js` 的现有主页，否则会有两个文件映射到同一个路由！
+
+:::
+
+:::warning
+
+如果禁用文档插件，不要忘记在配置文件的其他地方删除对文档插件的引用。特别是，请确保移除与文档相关的导航栏项目。
+
+:::
+
+:::tip
+
+还有一种“纯文档模式”，适用于那些只想使用文档功能的用户。请阅读[纯文档模式](./guides/docs/docs-introduction.mdx)以获取详细说明或对 `routeBasePath` 的更详尽解释。
+
+:::
+
+### 多个博客 {#multiple-blogs}
+
+默认情况下，classic 主题假设每个网站只有一个博客，因此只包含一个博客插件实例。如果您想在单个网站上拥有多个博客，这也是可以的！您可以通过在 `docusaurus.config.js` 的 `plugins` 选项中指定另一个博客插件来添加另一个博客。
+
+将 `routeBasePath` 设置为您希望第二个博客被访问的 URL 路由。请注意，这里的 `routeBasePath` 必须与第一个博客不同，否则可能会发生路径冲突！此外，将 `path` 设置为包含第二个博客条目的目录路径。
+
+正如[多实例插件](./using-plugins.mdx#multi-instance-plugins-and-plugin-ids)文档中所述，您需要为插件分配一个唯一的 ID。
+
+```js title="docusaurus.config.js"
+export default {
+  // ...
+  plugins: [
+    [
+      '@docusaurus/plugin-content-blog',
+      {
+        /**
+         * 任何多实例插件都需要
+         */
+        id: 'second-blog',
+        /**
+         * 您网站博客部分的 URL 路由。
+         * *不要* 包含结尾的斜杠。
+         */
+        routeBasePath: 'my-second-blog',
+        /**
+         * 文件系统中相对于站点目录的数据路径。
+         */
+        path: './my-second-blog',
+      },
+    ],
+  ],
+};
+```
+
+举个例子，我们[在这里](/tests/blog)托管了第二个博客。

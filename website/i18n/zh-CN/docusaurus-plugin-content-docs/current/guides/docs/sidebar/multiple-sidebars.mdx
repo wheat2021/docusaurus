@@ -1,0 +1,143 @@
+---
+slug: /sidebar/multiple-sidebars
+---
+
+# 使用多个侧边栏
+
+您可以为每一**组您想组合在一起的 Markdown 文件**创建一个侧边栏。
+
+:::tip
+
+Docusaurus 网站是使用多个侧边栏的一个好例子：
+
+- [文档](../../../introduction.mdx)
+- [API](../../../cli.mdx)
+
+:::
+
+考虑这个例子：
+
+```js title="sidebars.js"
+export default {
+  tutorialSidebar: {
+    '分类 A': ['doc1', 'doc2'],
+  },
+  apiSidebar: ['doc3', 'doc4'],
+};
+```
+
+当浏览 `doc1` 或 `doc2` 时，将显示 `tutorialSidebar`；当浏览 `doc3` 或 `doc4` 时，将显示 `apiSidebar`。
+
+## 理解侧边栏关联 {#sidebar-association}
+
+沿用上面的例子，如果一个 `commonDoc` 被包含在两个侧边栏中：
+
+```js title="sidebars.js"
+export default {
+  tutorialSidebar: {
+    '分类 A': ['doc1', 'doc2', 'commonDoc'],
+  },
+  apiSidebar: ['doc3', 'doc4', 'commonDoc'],
+};
+```
+
+当浏览 `commonDoc` 时，Docusaurus 如何知道要显示哪个侧边栏？答案是：它不知道，我们不保证它会选择哪个侧边栏。
+
+当您将文档 Y 添加到侧边栏 X 时，它会创建一个双向绑定：侧边栏 X 包含一个到文档 Y 的链接，并且在浏览文档 Y 时，将显示侧边栏 X。但有时，我们想打破任一隐式绑定：
+
+1. _如何在侧边栏 X 中生成到文档 Y 的链接，而不让侧边栏 X 显示在 Y 上？_ 例如，当我在多个侧边栏中包含文档 Y 时，如上例所示，并且我想明确告诉 Docusaurus 显示一个侧边栏？
+2. _如何在浏览文档 Y 时显示侧边栏 X，但侧边栏 X 不应包含到 Y 的链接？_ 例如，当 Y 是一个“文档主页”并且侧边栏纯粹用于导航时？
+
+Front matter 选项 `displayed_sidebar` 将强制设置侧边栏关联。对于同一个例子，您仍然可以使用文档简写而无需任何特殊配置：
+
+```js title="sidebars.js"
+export default {
+  tutorialSidebar: {
+    '分类 A': ['doc1', 'doc2'],
+  },
+  apiSidebar: ['doc3', 'doc4'],
+};
+```
+
+然后添加一个 front matter：
+
+```md title="commonDoc.md"
+---
+displayed_sidebar: apiSidebar
+---
+```
+
+这明确告诉 Docusaurus 在浏览 `commonDoc` 时显示 `apiSidebar`。使用相同的方法，您可以让不包含文档 Y 的侧边栏 X 出现在文档 Y 上：
+
+```md title="home.md"
+---
+displayed_sidebar: tutorialSidebar
+---
+```
+
+即使 `tutorialSidebar` 不包含到 `home` 的链接，在查看 `home` 时它仍然会显示。
+
+如果您设置 `displayed_sidebar: null`，此页面上将不会显示任何侧边栏，因此也不会有分页。
+
+## 生成分页 {#generating-pagination}
+
+Docusaurus 使用侧边栏在每个文档页面的底部生成“下一个”和“上一个”分页链接。它严格使用显示的侧边栏：如果没有关联的侧边栏，它也不会生成分页。然而，链接为“下一个”和“上一个”的文档不保证显示相同的侧边栏：它们包含在此侧边栏中，但在它们的 front matter 中，它们可能有不同的 `displayed_sidebar`。
+
+如果通过设置 `displayed_sidebar` front matter 来显示一个侧边栏，并且此侧边栏不包含该文档本身，则不显示分页。
+
+您可以使用 front matter `pagination_next` 和 `pagination_prev` 来自定义分页。考虑这个侧边栏：
+
+```js title="sidebars.js"
+export default {
+  tutorial: [
+    'introduction',
+    {
+      installation: ['windows', 'linux', 'macos'],
+    },
+    'getting-started',
+  ],
+};
+```
+
+“windows”上的分页下一个链接指向“linux”，但这没有意义：您希望读者在安装后继续“getting-started”。在这种情况下，您可以手动设置分页：
+
+```md title="windows.md"
+---
+# highlight-next-line
+pagination_next: getting-started
+---
+
+# 在 Windows 上安装
+```
+
+您也可以使用 `pagination_next: null` 或 `pagination_prev: null` 来禁用显示分页链接。
+
+分页标签默认是侧边栏标签。您可以使用 front matter `pagination_label` 来自定义此文档在分页中的显示方式。
+
+## `ref` 项目 {#sidebar-item-ref}
+
+`ref` 类型在各方面都与 [`doc` 类型](./items.mdx#sidebar-item-doc)相同，只是它不参与生成导航元数据。它只注册自己为一个链接。在[生成分页](#generating-pagination)和[显示侧边栏](#sidebar-association)时，`ref` 项目被完全忽略。
+
+当您希望从多个侧边栏链接到同一个文档时，它特别有用。该文档只属于一个侧边栏（即它被注册为 `type: 'doc'` 或来自自动生成目录的那个），但它的链接将出现在所有注册它的侧边栏中。
+
+考虑这个例子：
+
+```js title="sidebars.js"
+export default {
+  tutorialSidebar: {
+    '分类 A': [
+      'doc1',
+      'doc2',
+      // highlight-next-line
+      {type: 'ref', id: 'commonDoc'},
+      'doc5',
+    ],
+  },
+  apiSidebar: ['doc3', 'doc4', 'commonDoc'],
+};
+```
+
+您可以将 `ref` 类型视为等同于执行以下操作：
+
+- 为 `commonDoc` 设置 `displayed_sidebar: tutorialSidebar`（`ref` 在侧边栏关联中被忽略）
+- 为 `doc2` 设置 `pagination_next: doc5` 并为 `doc5` 设置 `pagination_prev: doc2`（`ref` 在分页生成中被忽略）

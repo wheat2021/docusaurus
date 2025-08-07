@@ -1,0 +1,106 @@
+---
+description: 如何在保持合理的打包大小的同时，确保足够的浏览器支持。
+---
+
+# 浏览器支持
+
+Docusaurus 允许网站通过 [browserslist 配置](https://github.com/browserslist/browserslist)来定义支持的浏览器列表。
+
+## 目的 {#purpose}
+
+网站需要在向后兼容性和打包大小之间取得平衡。由于旧版浏览器不支持现代 API 或语法，实现相同功能需要更多的代码。
+
+例如，您可能使用[可选链语法](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining)：
+
+```js
+const value = obj?.prop?.val;
+```
+
+……不幸的是，只有在 2020 年之后发布的浏览器版本才认识这种语法。为了与早期的浏览器版本兼容，在为生产环境构建您的网站时，我们的 JS 加载器会将您的代码转译为更冗长的语法：
+
+```js
+var _obj, _obj$prop;
+
+const value =
+  (_obj = obj) === null || _obj === void 0
+    ? void 0
+    : (_obj$prop = _obj.prop) === null || _obj$prop === void 0
+    ? void 0
+    : _obj$prop.val;
+```
+
+然而，这会惩罚所有其他用户，因为 29 个字符的行现在变成了 168 个字符——增加了 6 倍！（实际上，情况会更好，因为使用的名称会更短。）作为权衡，JS 加载器仅将语法转译到浏览器列表中定义的所有浏览器版本都支持的程度。
+
+浏览器列表默认通过 `package.json` 文件作为根 `browserslist` 字段提供。
+
+:::warning
+
+在旧版浏览器上，编译后的输出将使用不受支持的（过于现代的）JS 语法，导致 React 初始化失败，最终得到一个只有 HTML/CSS 而没有 JS 的静态网站。
+
+:::
+
+## 默认值 {#default-values}
+
+使用默认 classic 模板初始化的网站在 `package.json` 中有以下内容：
+
+```json title="package.json"
+{
+  "name": "docusaurus",
+  // ...
+  // highlight-start
+  "browserslist": {
+    "production": [">0.5%", "not dead", "not op_mini all"],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+  // highlight-end
+  // ...
+}
+```
+
+用自然语言解释，生产环境中支持的浏览器是那些：
+
+- 市场份额超过 0.5%；_并且_
+- 在过去 24 个月内有官方支持或更新（与“dead”相对）；_并且_
+- 不是 Opera Mini。
+
+而开发环境中使用的浏览器是：
+
+- 最新版本的 Chrome _或_ Firefox _或_ Safari。
+
+您可以使用 `browserslist` CLI “评估”任何配置以获取实际列表：
+
+```bash
+npx browserslist --env="production"
+```
+
+输出是生产环境中支持的所有浏览器。以下是 2022 年 1 月的输出：
+
+```text
+and_chr 96
+and_uc 12.12
+chrome 96
+chrome 95
+chrome 94
+edge 96
+firefox 95
+firefox 94
+ie 11
+ios_saf 15.2
+ios_saf 15.0-15.1
+ios_saf 14.5-14.8
+ios_saf 14.0-14.4
+ios_saf 12.2-12.5
+opera 82
+opera 81
+safari 15.1
+safari 14.1
+safari 13.1
+```
+
+## 阅读更多 {#read-more}
+
+您可能希望访问 [browserslist 文档](https://github.com/browserslist/browserslist/blob/main/README.md)以获取更多规范，特别是可接受的[查询值](https://github.com/browserslist/browserslist/blob/main/README.md#queries)和[最佳实践](https://github.com/browserslist/browserslist/blob/main/README.md#best-practices)。

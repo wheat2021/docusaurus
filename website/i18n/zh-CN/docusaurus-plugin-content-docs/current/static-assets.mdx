@@ -1,0 +1,109 @@
+---
+description: 静态资源是直接复制到构建输出的非代码文件。了解它们是如何被处理的，以及使用静态资源的最佳实践。
+---
+
+# 静态资源
+
+静态资源是直接复制到构建输出的非代码文件。它们包括图片、样式表、网站图标、字体等。
+
+默认情况下，建议您将这些资源放在 `static` 文件夹中。您放入**该目录的每个文件都将被复制**到生成的 `build` 文件夹的根目录，并保留目录层次结构。例如，如果您在 static 文件夹中添加一个名为 `sun.jpg` 的文件，它将被复制到 `build/sun.jpg`。
+
+这意味着：
+
+- 对于站点 `baseUrl: '/'`，图片 `/static/img/docusaurus.png` 将在 `/img/docusaurus.png` 处提供服务。
+- 对于站点 `baseUrl: '/subpath/'`，图片 `/static/img/docusaurus.png` 将在 `/subpath/img/docusaurus.png` 处提供服务。
+
+您可以在 `docusaurus.config.js` 中自定义静态目录源。例如，我们可以将 `public` 添加为另一个可能的路径：
+
+```js title="docusaurus.config.js"
+export default {
+  title: '我的网站',
+  staticDirectories: ['public', 'static'],
+  // ...
+};
+```
+
+现在，`public` 和 `static` 中的所有文件都将被复制到构建输出。
+
+## 引用您的静态资源 {#referencing-your-static-asset}
+
+### 在 JSX 中 {#in-jsx}
+
+在 JSX 中，您可以使用绝对 URL 在代码中引用 `static` 文件夹中的资源，但这并不理想，因为更改站点 `baseUrl` 将**破坏这些链接**。对于在 `https://example.com/test` 提供的图片 `<img src="/img/docusaurus.png" />`，浏览器将尝试从 URL 根目录解析它，即作为 `https://example.com/img/docusaurus.png`，这将失败，因为它实际上是在 `https://example.com/test/img/docusaurus.png` 提供的。
+
+您可以 `import()` 或 `require()` 静态资源（推荐），或使用 `useBaseUrl` 实用函数：两者都会为您在路径前添加 `baseUrl`。
+
+示例：
+
+```jsx title="MyComponent.js"
+import DocusaurusImageUrl from '@site/static/img/docusaurus.png';
+
+<img src={DocusaurusImageUrl} />;
+```
+
+```jsx title="MyComponent.js"
+<img src={require('@site/static/img/docusaurus.png').default} />
+```
+
+```jsx title="MyComponent.js"
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+<img src={useBaseUrl('/img/docusaurus.png')} />;
+```
+
+您还可以导入 SVG 文件：它们将被转换为 React 组件。
+
+```jsx title="MyComponent.js"
+import DocusaurusLogoWithKeytar from '@site/static/img/docusaurus_keytar.svg';
+
+<DocusaurusLogoWithKeytar title="Docusaurus Logo" className="logo" />;
+```
+
+### 在 Markdown 中 {#in-markdown}
+
+在 Markdown 中，您可以在编写链接或图片时坚持使用绝对路径，因为 Docusaurus 在解析 Markdown 时会将它们作为 `require` 调用而不是 URL 来处理。请参阅 [Markdown 静态资源](./guides/markdown-features/markdown-features-assets.mdx)。
+
+```md
+你这样写一个链接：[下载此文档](/files/note.docx)
+
+Docusaurus 会将其更改为：<a href={require('static/files/note.docx')}>下载此文档</a>
+```
+
+:::warning 使用 Markdown 语法
+
+Docusaurus 只会解析 Markdown 语法的链接。如果您的资源引用使用 JSX 标签 `<a>` / `<img>`，则不会做任何处理。
+
+:::
+
+### 在 CSS 中 {#in-css}
+
+在 CSS 中，`url()` 函数通常用于引用字体和图片等资源。要引用静态资源，请使用绝对路径：
+
+```css
+@font-face {
+  font-family: 'Caroline';
+  src: url('/font/Caroline.otf');
+}
+```
+
+`static/font/Caroline.otf` 资源将被打包工具加载。
+
+:::warning 重要提示
+
+一个重要的要点是：**永远不要硬编码您的 base URL！** base URL 被视为实现细节，应该可以轻松更改。所有路径，即使它们看起来像 URL slug，实际上都是文件路径。
+
+如果您觉得 URL slug 的心智模型更容易理解，这里有一个经验法则：
+
+- 在编写 JSX 时，假装您有一个像 `/test/` 这样的 base URL，这样您就不会使用像 `src="/img/thumbnail.png"` 这样的绝对 URL 路径，而是 `require` 资源。
+- 在编写 Markdown 或 CSS 时，假装它是 `/`，这样您总是使用不带 base URL 的绝对路径。
+
+:::
+
+## 注意事项 {#caveats}
+
+请记住：
+
+- 默认情况下，`static` 文件夹中的任何文件都不会被后处理、哈希或压缩。
+  - 然而，正如我们上面所演示的，我们通常能够将它们转换为 `require` 调用，以便它们确实被处理。这对于积极的缓存和更好的用户体验是有好处的。
+- 通过硬编码的绝对路径引用的缺失文件在编译时不会被检测到，并将导致 404 错误。
+- 默认情况下，GitHub Pages 会通过 [Jekyll](https://jekyllrb.com/) 运行发布的文件。由于 Jekyll 会丢弃任何以 `_` 开头的文件，如果您使用 GitHub Pages 托管，建议您通过在 `static` 目录中添加一个名为 `.nojekyll` 的空文件来禁用 Jekyll。
