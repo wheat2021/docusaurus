@@ -1,0 +1,55 @@
+---
+sidebar_position: 7
+slug: /api/plugins/@docusaurus/plugin-svgr
+---
+
+# 📦 plugin-svgr
+
+import APITable from '@site/src/components/APITable';
+
+一个 [SVGR](https://react-svgr.com/) 插件，可在构建时自动将 SVG 文件转换为 React 组件。
+
+## 安装 {#installation}
+
+```bash npm2yarn
+npm install --save @docusaurus/plugin-svgr
+```
+
+:::tip
+
+如果你使用预设 `@docusaurus/preset-classic`，则无需将此插件作为依赖项安装。
+
+你可以通过[预设选项](../../using-plugins.mdx#docusauruspreset-classic)配置此插件。
+
+:::
+
+## 配置 {#configuration}
+
+接受的字段：
+
+```mdx-code-block
+<APITable>
+```
+
+| 名称 | 类型 | 默认值 | 描述 |
+| --- | --- | --- | --- |
+| `svgrConfig` | `object` | `{}` | [SVGR 配置选项](https://react-svgr.com/docs/options/)，会按原样转发 |
+
+```mdx-code-block
+</APITable>
+```
+
+### 配置示例 {#ex-config}
+
+你可以通过插件选项来配置此插件。
+
+```js config-tabs
+// 预设选项: svgr
+// 插件选项: @docusaurus/plugin-svgr
+
+const config = {
+  svgrConfig: {
+    /* SVGR 配置 */
+  },
+};
+```

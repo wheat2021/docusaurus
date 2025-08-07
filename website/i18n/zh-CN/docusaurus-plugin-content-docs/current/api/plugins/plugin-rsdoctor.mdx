@@ -1,0 +1,57 @@
+---
+sidebar_position: 7
+slug: /api/plugins/@docusaurus/plugin-rsdoctor
+---
+
+# 📦 plugin-rsdoctor
+
+import APITable from '@site/src/components/APITable';
+
+[Rsdoctor](https://rsdoctor.dev/) 插件可以帮助你排查 Docusaurus 网站的打包阶段问题，支持 Webpack 和 Rspack。
+
+:::tip
+
+用它来找出哪个插件或加载器正在拖慢打包速度，并将你的精力集中在优化瓶颈上。
+
+:::
+
+## 安装 {#installation}
+
+```bash npm2yarn
+npm install --save @docusaurus/plugin-rsdoctor
+```
+
+## 配置 {#configuration}
+
+接受的字段：
+
+```mdx-code-block
+<APITable>
+```
+
+| 名称 | 类型 | 默认值 | 描述 |
+| --- | --- | --- | --- |
+| `rsdoctorOptions` | `object` | `{}` | [Rsdoctor 打包器插件选项](https://rsdoctor.dev/config/options/options)，会按原样转发 |
+
+```mdx-code-block
+</APITable>
+```
+
+### 配置示例 {#ex-config}
+
+你可以通过插件选项来配置此插件。
+
+```js title="docusaurus.config.js"
+export default {
+  plugins: [
+    [
+      'rsdoctor',
+      {
+        rsdoctorOptions: {
+          mode: 'lite',
+        },
+      },
+    ],
+  ],
+};
+```

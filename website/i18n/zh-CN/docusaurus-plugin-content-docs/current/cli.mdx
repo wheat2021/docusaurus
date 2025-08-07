@@ -1,0 +1,190 @@
+---
+description: Docusaurus 提供了一套脚本来帮助你生成、启动和部署你的网站。
+---
+
+# 命令行工具
+
+Docusaurus 提供了一套脚本来帮助你生成、启动和部署你的网站。
+
+在你的网站初始化之后，网站源码中会包含 Docusaurus 脚本，你可以通过你的包管理器来调用它们：
+
+```json title="package.json"
+{
+  // ...
+  "scripts": {
+    "docusaurus": "docusaurus",
+    "start": "docusaurus start",
+    "build": "docusaurus build",
+    "swizzle": "docusaurus swizzle",
+    "deploy": "docusaurus deploy",
+    "clear": "docusaurus clear",
+    "serve": "docusaurus serve",
+    "write-translations": "docusaurus write-translations",
+    "write-heading-ids": "docusaurus write-heading-ids"
+  }
+}
+```
+
+## Docusaurus 命令行工具命令 {#docusaurus-cli-commands}
+
+下面是 Docusaurus 命令行工具命令及其用法的列表：
+
+### `docusaurus start [siteDir]` {#docusaurus-start-sitedir}
+
+使用 [Webpack Dev Server](https://webpack.js.org/configuration/dev-server) 在本地构建并提供你的网站预览。
+
+#### 选项 {#options}
+
+| 名称 | 默认值 | 描述 |
+| --- | --- | --- |
+| `--port` | `3000` | 指定开发服务器的端口。 |
+| `--host` | `localhost` | 指定要使用的主机。例如，如果你希望你的服务器可以从外部访问，你可以使用 `--host 0.0.0.0`。 |
+| `--locale` | | 指定要使用的网站语言。 |
+| `--hot-only` | `false` | 在构建失败时启用热模块替换，而不会刷新页面作为后备方案。更多信息请参见[此处](https://webpack.js.org/configuration/dev-server/#devserverhotonly)。 |
+| `--no-open` | `false` | 不在浏览器中自动打开页面。 |
+| `--config` | `undefined` | Docusaurus 配置文件的路径，默认为 `[siteDir]/docusaurus.config.js` |
+| `--poll [optionalIntervalMs]` | `false` | 在监听不起作用的环境中，使用文件轮询代替文件监听以实现实时重载。更多信息请参见[此处](https://webpack.js.org/configuration/watch/#watchoptionspoll)。 |
+| `--no-minify` | `false` | 构建网站时不压缩 JS/CSS 包。 |
+
+:::info
+
+请注意，某些功能（例如，锚点链接）在开发中将无法正常工作。该功能在生产环境中将按预期工作。
+
+:::
+
+:::info 通过网络进行开发
+
+当从远程服务器或虚拟机（例如 GitHub Codespaces）转发端口 3000 时，你可以在 `0.0.0.0` 上运行开发服务器，使其在本地 IP 上监听。
+
+```bash npm2yarn
+npm run start -- --host 0.0.0.0
+```
+
+:::
+
+#### 启用 HTTPS {#enabling-https}
+
+获取证书有多种方法。我们将以 [mkcert](https://github.com/FiloSottile/mkcert) 为例。
+
+1. 运行 `mkcert localhost` 来生成 `localhost.pem` + `localhost-key.pem`
+
+2. 运行 `mkcert -install` 将证书安装到你的信任存储中，然后重启你的浏览器
+
+3. 使用 Docusaurus HTTPS 环境变量启动应用：
+
+```bash
+HTTPS=true SSL_CRT_FILE=localhost.pem SSL_KEY_FILE=localhost-key.pem yarn start
+```
+
+4. 打开 `https://localhost:3000/`
+
+### `docusaurus build [siteDir]` {#docusaurus-build-sitedir}
+
+为生产环境编译你的网站。
+
+#### 选项 {#options-1}
+
+| 名称 | 默认值 | 描述 |
+| --- | --- | --- |
+| `--dev` | | 在开发模式下构建网站，包括完整的 React 错误信息。 |
+| `--bundle-analyzer` | `false` | 使用 [webpack bundle analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer) 分析你的包。 |
+| `--out-dir` | `build` | 新输出目录的完整路径，相对于当前工作区。 |
+| `--config` | `undefined` | Docusaurus 配置文件的路径，默认为 `[siteDir]/docusaurus.config.js` |
+| `--locale` | | 以指定的语言构建网站。如果未指定，则构建所有已知的语言版本。 |
+| `--no-minify` | `false` | 构建网站时不压缩 JS/CSS 包。 |
+
+:::info
+
+对于 CSS 包的高级压缩，我们使用 [advanced cssnano preset](https://github.com/cssnano/cssnano/tree/master/packages/cssnano-preset-advanced)（以及其他几个 PostCSS 插件）和 [clean-css 的 2 级优化](https://github.com/jakubpawlowicz/clean-css#level-2-optimizations)。如果由于这种高级 CSS 压缩导致 CSS 损坏，请使用环境变量 `USE_SIMPLE_CSS_MINIFIER=true` 来构建你的网站，以使用 [default cssnano preset](https://github.com/cssnano/cssnano/tree/master/packages/cssnano-preset-default) 压缩 CSS。**如果你遇到 CSS 压缩错误，请[填写一个 issue](https://github.com/facebook/docusaurus/issues/new?labels=bug%2C+needs+triage&template=bug.md)。**
+
+你可以使用环境变量 `SKIP_HTML_MINIFICATION=true` 跳过 HTML 压缩。
+
+:::
+
+### `docusaurus swizzle [themeName] [componentName] [siteDir]` {#docusaurus-swizzle}
+
+[Swizzle](./swizzling.mdx) 一个主题组件以进行自定义。
+
+```bash npm2yarn
+npm run swizzle [themeName] [componentName] [siteDir]
+
+# 示例（省略 siteDir 表示当前目录）
+npm run swizzle @docusaurus/theme-classic Footer -- --eject
+```
+
+swizzle 命令行工具是交互式的，它将引导你完成整个 [swizzle 过程](./swizzling.mdx)。
+
+#### 选项 {#options-swizzle}
+
+| 名称 | 描述 |
+| --- | --- |
+| `themeName` | 要 swizzle 的主题名称。 |
+| `componentName` | 要 swizzle 的主题组件名称。 |
+| `--list` | 显示可供 swizzle 的组件 |
+| `--eject` | [Eject](./swizzling.mdx#ejecting) 主题组件 |
+| `--wrap` | [Wrap](./swizzling.mdx#wrapping) 主题组件 |
+| `--danger` | 允许立即 swizzle 不安全的组件 |
+| `--typescript` | Swizzle TypeScript 变体组件 |
+| `--config` | Docusaurus 配置文件的路径，默认为 `[siteDir]/docusaurus.config.js` |
+
+:::warning
+
+由于内部重构，不安全的组件有更高的破坏性变更风险。
+
+:::
+
+### `docusaurus deploy [siteDir]` {#docusaurus-deploy-sitedir}
+
+使用 [GitHub Pages](https://pages.github.com/) 部署你的网站。有关更多详细信息，请查看[部署](deployment.mdx#deploying-to-github-pages)文档。
+
+#### 选项 {#options-3}
+
+| 名称 | 默认值 | 描述 |
+| --- | --- | --- |
+| `--locale` | | 以指定的语言部署网站。如果未指定，则部署所有已知的语言版本。 |
+| `--out-dir` | `build` | 新输出目录的完整路径，相对于当前工作区。 |
+| `--skip-build` | `false` | 部署网站而不构建它。这在使用自定义部署脚本时可能很有用。 |
+| `--target-dir` | `.` | 要部署到的目标目录的路径。 |
+| `--config` | `undefined` | Docusaurus 配置文件的路径，默认为 `[siteDir]/docusaurus.config.js` |
+
+### `docusaurus serve [siteDir]` {#docusaurus-serve-sitedir}
+
+在本地为你的已构建网站提供服务。
+
+| 名称 | 默认值 | 描述 |
+| --- | --- | --- |
+| `--port` | `3000` | 使用指定的端口 |
+| `--dir` | `build` | 输出目录的完整路径，相对于当前工作区 |
+| `--build` | `false` | 在提供服务前构建网站 |
+| `--config` | `undefined` | Docusaurus 配置文件的路径，默认为 `[siteDir]/docusaurus.config.js` |
+| `--host` | `localhost` | 指定要使用的主机。例如，如果你希望你的服务器可以从外部访问，你可以使用 `--host 0.0.0.0`。 |
+| `--no-open` | 本地为 `false`，CI 中为 `true` | 不在浏览器窗口中打开服务器位置。 |
+
+### `docusaurus clear [siteDir]` {#docusaurus-clear-sitedir}
+
+清除 Docusaurus 网站生成的资源、缓存和构建产物。
+
+我们建议在报告错误、升级版本或任何时候你的 Docusaurus 网站出现问题时运行此命令。
+
+### `docusaurus write-translations [siteDir]` {#docusaurus-write-translations-sitedir}
+
+写入你将需要翻译的 JSON 翻译文件。
+
+默认情况下，文件会写入 `website/i18n/<defaultLocale>/...`。
+
+| 名称 | 默认值 | 描述 |
+| --- | --- | --- |
+| `--locale` | `<defaultLocale>` | 定义你想要将翻译的 JSON 文件写入哪个语言文件夹 |
+| `--override` | `false` | 覆盖现有的翻译消息 |
+| `--config` | `undefined` | Docusaurus 配置文件的路径，默认为 `[siteDir]/docusaurus.config.js` |
+| `--messagePrefix` | `''` | 允许为每个翻译消息添加前缀，以帮助你突出显示未翻译的字符串 |
+
+### `docusaurus write-heading-ids [siteDir] [files]` {#docusaurus-write-heading-ids-sitedir}
+
+为你的网站的 Markdown 文档添加[明确的标题 ID](./guides/markdown-features/markdown-features-toc.mdx#heading-ids)。
+
+| 名称 | 默认值 | 描述 |
+| --- | --- | --- |
+| `files` | 所有插件使用的 MD 文件 | 你想要写入标题 ID 的文件。 |
+| `--maintain-case` | `false` | 保留标题的大小写，否则全部转换为小写。 |
+| `--overwrite` | `false` | 覆盖现有的标题 ID。 |
