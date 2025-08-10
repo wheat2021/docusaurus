@@ -202,17 +202,8 @@ export default async function createConfigAsync() {
       },
     ],
     i18n: {
-      defaultLocale,
-
-      locales:
-        isDeployPreview || isBranchDeploy
-          ? // Deploy preview and branch deploys: keep them fast!
-            [defaultLocale]
-          : isI18nStaging
-          ? // Staging locales: https://docusaurus-i18n-staging.netlify.app/
-            [defaultLocale, 'ja']
-          : // Production locales
-            [defaultLocale, 'fr', 'pt-BR', 'ko', 'zh-CN'],
+      defaultLocale: 'en',
+      locales: ['en', 'zh-CN'],
     },
     markdown: {
       format: 'detect',
@@ -502,14 +493,7 @@ export default async function createConfigAsync() {
             remarkPlugins: [[npm2yarn, {sync: true}], remarkMath, configTabs],
             rehypePlugins: [rehypeKatex],
             disableVersioning: isVersioningDisabled,
-            lastVersion:
-              isDev ||
-              isVersioningDisabled ||
-              isDeployPreview ||
-              isBranchDeploy ||
-              isBuildFast
-                ? 'current'
-                : getLastStableVersion(),
+            lastVersion: 'current',
 
             onlyIncludeVersions: (() => {
               if (isBuildFast) {

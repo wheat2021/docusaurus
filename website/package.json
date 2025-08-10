@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
-    "start": "docusaurus start",
+    "start": "docusaurus start  --locale zh-CN",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy",
+    "deploy": "tar -czf build.tar.gz -C build . && scp build.tar.gz appadmin@168.61.11.190:/app/aurora/aurora-tm-script/dist/ && ssh appadmin@168.61.11.190 \"cd /app/aurora/aurora-tm-script/dist/ && tar -xzf build.tar.gz && chmod -R 755 /app/aurora/aurora-tm-script/dist && rm build.tar.gz\" && rm build.tar.gz",
     "clear": "docusaurus clear && rimraf changelog && rimraf _dogfooding/_swizzle_theme_tests",
     "serve": "docusaurus serve",
     "test:css-order": "node testCSSOrder.mjs",

@@ -330,7 +330,7 @@
     "message": "🙏请添加您的网站"
   },
   "showcase.filters.resultCount": {
-    "message": "1个网站|{sitesCount}个网站",
+    "message": "{sitesCount}个网站",
     "description": "Pluralized label for the number of sites found on the showcase. Use as much plural forms (separated by \"|\") as your language support (see https://www.unicode.org/cldr/cldr-aux/charts/34/supplemental/language_plural_rules.html)"
   },
   "Want to implement the same page? Read {guideLink} to find out!": {
@@ -443,7 +443,7 @@
     "description": "The ARIA label for the breadcrumbs"
   },
   "theme.docs.DocCard.categoryDescription.plurals": {
-    "message": "1个项目|{count}个项目",
+    "message": "{count}个项目",
     "description": "The default description for a category card in the generated index about how many items this category includes"
   },
   "theme.docs.paginator.navAriaLabel": {
@@ -459,7 +459,7 @@
     "description": "The label used to navigate to the next doc"
   },
   "theme.docs.tagDocListPageTitle.nDocsTagged": {
-    "message": "一个文档已标记|{count}个文档已标记",
+    "message": "{count}个文档已标记",
     "description": "Pluralized label for \"{count} docs tagged\". Use as much plural forms (separated by \"|\") as your language support (see https://www.unicode.org/cldr/cldr-aux/charts/34/supplemental/language_plural_rules.html)"
   },
   "theme.docs.tagDocListPageTitle": {
@@ -582,7 +582,7 @@
     "description": "The 2nd paragraph of the 404 page"
   },
   "theme.blog.post.readingTime.plurals": {
-    "message": "一分钟阅读|{readingTime}分钟阅读",
+    "message": "{readingTime}分钟阅读",
     "description": "Pluralized label for \"{readingTime} min read\". Use as much plural forms (separated by \"|\") as your language support (see https://www.unicode.org/cldr/cldr-aux/charts/34/supplemental/language_plural_rules.html)"
   },
   "theme.blog.post.readMore": {
@@ -654,7 +654,7 @@
     "description": "The ARIA label and title attribute for expand button of doc sidebar"
   },
   "theme.SearchPage.documentsFound.plurals": {
-    "message": "找到一篇文档|找到{count}篇文档",
+    "message": "找到{count}篇文档",
     "description": "Pluralized label for \"{count} documents found\". Use as much plural forms (separated by \"|\") as your language support (see https://www.unicode.org/cldr/cldr-aux/charts/34/supplemental/language_plural_rules.html)"
   },
   "theme.SearchPage.existingResultsTitle": {
@@ -813,7 +813,7 @@
     "description": "The result label of the live codeblocks"
   },
   "theme.blog.post.plurals": {
-    "message": "一篇文章|{count}篇文章",
+    "message": "{count}篇文章",
     "description": "Pluralized label for \"{count} posts\". Use as much plural forms (separated by \"|\") as your language support (see https://www.unicode.org/cldr/cldr-aux/charts/34/supplemental/language_plural_rules.html)"
   },
   "theme.blog.tagTitle": {
