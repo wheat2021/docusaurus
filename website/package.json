@@ -5,7 +5,7 @@
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start  --locale zh-CN",
-    "build": "docusaurus build",
+    "build": "cross-env BASE_URL='/docusaurus/' docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "tar -czf build.tar.gz -C build . && scp build.tar.gz appadmin@168.61.11.190:/app/aurora/aurora-tm-script/dist/ && ssh appadmin@168.61.11.190 \"cd /app/aurora/aurora-tm-script/dist/ && tar -xzf build.tar.gz && chmod -R 755 /app/aurora/aurora-tm-script/dist && rm build.tar.gz\" && rm build.tar.gz",
     "clear": "docusaurus clear && rimraf changelog && rimraf _dogfooding/_swizzle_theme_tests",
